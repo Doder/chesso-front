@@ -33,6 +33,12 @@ export function OpeningTree() {
               position={position}
               onPieceDrop={onDrop}
               boardWidth={window.innerHeight - 200}
+              customDarkSquareStyle={{ backgroundColor: '#D3D3D3' }}
+              customLightSquareStyle={{ backgroundColor: '#EBEBEB' }}
+              boardStyle={{
+                borderRadius: '5px',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+              }}
             />
         </div>
         <div className="w-1/3 space-y-4">
