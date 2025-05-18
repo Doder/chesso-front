@@ -1,11 +1,42 @@
-import { useState } from 'react'
-import { Chessboard } from 'react-chessboard'
 import { Chess } from 'chess.js'
+import { Chessboard } from 'react-chessboard'
+import { useState } from 'react'
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
 
 export function OpeningTree() {
   const [game] = useState(() => new Chess())
   const [position, setPosition] = useState(game.fen())
   const [history, setHistory] = useState([])
+  const [currentMove, setCurrentMove] = useState(-1)
+
+  const goToMove = (moveIndex) => {
+    const newGame = new Chess()
+    for (let i = 0; i <= moveIndex && i < history.length; i++) {
+      newGame.move(history[i])
+    }
+    setPosition(newGame.fen())
+    setCurrentMove(moveIndex)
+  }
+
+  const goToPrevMove = () => {
+    if (currentMove >= 0) {
+      goToMove(currentMove - 1)
+    }
+  }
+
+  const goToNextMove = () => {
+    if (currentMove < history.length - 1) {
+      goToMove(currentMove + 1)
+    }
+  }
+
+  const goToStart = () => {
+    goToMove(-1)
+  }
+
+  const goToEnd = () => {
+    goToMove(history.length - 1)
+  }
   const [copySuccess, setCopySuccess] = useState(false)
 
   function onDrop(sourceSquare, targetSquare) {
@@ -18,7 +49,9 @@ export function OpeningTree() {
 
       if (move === null) return false
       setPosition(game.fen())
-      setHistory(game.history())
+      const newHistory = game.history()
+      setHistory(newHistory)
+      setCurrentMove(newHistory.length - 1)
       return true
     } catch {
       return false
@@ -35,11 +68,50 @@ export function OpeningTree() {
               boardWidth={window.innerHeight - 200}
               customDarkSquareStyle={{ backgroundColor: '#D3D3D3' }}
               customLightSquareStyle={{ backgroundColor: '#EBEBEB' }}
-              boardStyle={{
-                borderRadius: '5px',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-              }}
+              customBoardStyle={
+                {
+                  margin: '0 auto',
+                  borderRadius: '5px',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                }
+              }
             />
+
+          {/* Move navigation */}
+          <div className="flex justify-center gap-2 mt-4">
+            <button
+              onClick={goToStart}
+              disabled={currentMove < 0}
+              className="p-2 rounded hover:bg-secondary/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Go to start"
+            >
+              <ChevronsLeft className="w-5 h-5" />
+            </button>
+            <button
+              onClick={goToPrevMove}
+              disabled={currentMove < 0}
+              className="p-2 rounded hover:bg-secondary/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Previous move"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button
+              onClick={goToNextMove}
+              disabled={currentMove >= history.length - 1}
+              className="p-2 rounded hover:bg-secondary/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Next move"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+            <button
+              onClick={goToEnd}
+              disabled={currentMove >= history.length - 1}
+              className="p-2 rounded hover:bg-secondary/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Go to end"
+            >
+              <ChevronsRight className="w-5 h-5" />
+            </button>
+          </div>
         </div>
         <div className="w-1/3 space-y-4">
           <div className="border border-border rounded-lg overflow-hidden">
@@ -67,6 +139,9 @@ export function OpeningTree() {
                   </div>
                   <span className="text-sm">35%</span>
                 </div>
+              </div>
+
+              <div className="space-y-2">
                 <div className="flex items-center justify-between p-2 hover:bg-secondary/20 rounded cursor-pointer">
                   <div className="flex items-center gap-2">
                     <span className="font-mono">Nf3</span>
@@ -113,6 +188,7 @@ export function OpeningTree() {
               </div>
             </div>
           </div>
+
         </div>
       </div>
     </div>
