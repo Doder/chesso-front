@@ -114,6 +114,7 @@ export function OpeningTree() {
           </div>
         </div>
         <div className="w-1/3 space-y-4">
+          {/* Opening Explorer */}
           <div className="border border-border rounded-lg overflow-hidden">
             <div className="bg-secondary/5 border-b border-border px-4 py-3">
               <div className="flex justify-between items-center">
@@ -122,7 +123,6 @@ export function OpeningTree() {
               </div>
             </div>
             <div className="p-4 space-y-4">
-
               <div className="space-y-2">
                 {/* Mock opening moves */}
                 <div className="flex items-center justify-between p-2 hover:bg-secondary/20 rounded cursor-pointer">
@@ -152,7 +152,7 @@ export function OpeningTree() {
               </div>
             </div>
           </div>
-
+          {/* Game moves */}
           <div className="border border-border rounded-lg overflow-hidden">
             <div className="bg-secondary/5 border-b border-border px-4 py-3">
               <div className="flex justify-between items-center">
@@ -171,24 +171,27 @@ export function OpeningTree() {
               </div>
             </div>
             <div className="p-4">
-              <div className="font-mono leading-relaxed flex flex-wrap gap-y-2">
-                {Array.from({ length: Math.ceil(history.length / 2) }, (_, i) => {
-                  const moveNumber = i + 1
-                  const whiteMove = history[i * 2]
-                  const blackMove = history[i * 2 + 1]
-                  
+              <div className="flex flex-wrap gap-2">
+                {history.map((move, index) => {
+                  const moveNumber = Math.floor(index / 2) + 1
+                  const isWhiteMove = index % 2 === 0
                   return (
-                    <span key={i} className="mr-3 inline-flex items-center">
-                      <span className="text-sm text-muted-foreground">{moveNumber}.</span>
-                      <span className="ml-1">{whiteMove}</span>
-                      {blackMove && <span className="ml-2">{blackMove}</span>}
-                    </span>
+                    <div key={index} className="flex items-center">
+                      {isWhiteMove && (
+                        <span className="text-sm text-muted-foreground mr-1">{moveNumber}.</span>
+                      )}
+                      <button
+                        onClick={() => goToMove(index)}
+                        className={`px-2 py-1 rounded text-sm font-mono ${currentMove === index ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary/20'}`}
+                      >
+                        {move}
+                      </button>
+                    </div>
                   )
                 })}
               </div>
             </div>
           </div>
-
         </div>
       </div>
     </div>
