@@ -17,6 +17,9 @@ export function Navbar() {
           <Link to="/games" className="text-sm font-medium text-muted-foreground hover:text-primary">
             Games
           </Link>
+          <Link to="/opening-tree" className="text-sm font-medium text-muted-foreground hover:text-primary">
+            Opening Tree
+          </Link>
         </div>
         <div className="ml-auto flex items-center space-x-4">
           <Button variant="ghost" size="icon">

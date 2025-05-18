@@ -4,6 +4,7 @@ import Layout from './components/layout'
 import LoginPage from './pages/login'
 import DashboardPage from './pages/dashboard'
 import GamesPage from './pages/games'
+import { OpeningTree } from './pages/opening-tree'
 import { getToken } from './lib/storage'
 
 function App() {
@@ -40,6 +41,7 @@ function App() {
           <Route index element={<DashboardPage />} />
           <Route path="dashboard" element={<Navigate to="/" />} />
           <Route path="games" element={<GamesPage />} />
+          <Route path="opening-tree" element={<OpeningTree />} />
         </Route>
       </Routes>
     </Router>
