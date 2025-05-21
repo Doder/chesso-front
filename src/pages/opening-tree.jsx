@@ -3,7 +3,7 @@ import { Chessboard } from 'react-chessboard'
 import { useState } from 'react'
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
 
-export function OpeningTree() {
+export function OpeningTree({ repertoireId }) {
   const [game] = useState(() => new Chess())
   const [position, setPosition] = useState(game.fen())
   const [history, setHistory] = useState([])

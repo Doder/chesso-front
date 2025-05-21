@@ -5,6 +5,8 @@ import LoginPage from './pages/login'
 import DashboardPage from './pages/dashboard'
 import GamesPage from './pages/games'
 import { OpeningTree } from './pages/opening-tree'
+import { Repertoires } from './pages/repertoires'
+import { Repertoire } from './pages/repertoire'
 import { getToken } from './lib/storage'
 
 function App() {
@@ -41,6 +43,8 @@ function App() {
           <Route index element={<DashboardPage />} />
           <Route path="dashboard" element={<Navigate to="/" />} />
           <Route path="games" element={<GamesPage />} />
+          <Route path="repertoires" element={<Repertoires />} />
+          <Route path="repertoire/:id" element={<Repertoire />} />
           <Route path="opening-tree" element={<OpeningTree />} />
         </Route>
       </Routes>

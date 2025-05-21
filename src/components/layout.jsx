@@ -18,12 +18,16 @@ export default function Layout() {
           <div className="flex items-center space-x-4">
             <nav>
               <ul className="flex space-x-4">
-                <li><Button variant="ghost">Dashboard</Button></li>
+                <li>
+                  <Link to="/">
+                    <Button variant="ghost">Dashboard</Button>
+                  </Link>
+                </li>
                 <li><Button variant="ghost">Profile</Button></li>
                 <li><Button variant="ghost">Settings</Button></li>
                 <li>
-                  <Link to="/opening-tree">
-                    <Button variant="ghost">Opening Tree</Button>
+                  <Link to="/repertoires">
+                    <Button variant="ghost">Repertoires</Button>
                   </Link>
                 </li>
               </ul>
