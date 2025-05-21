@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { OpeningTree } from './opening-tree'
 import { getRepertoire } from '@/api/repertoire'
+import { Openings } from './openings'
 
 export function Repertoire() {
   const { id } = useParams()
@@ -27,7 +27,7 @@ export function Repertoire() {
           {repertoire?.name || 'Loading...'}
         </h2>
       </div>
-      <OpeningTree repertoireId={id} side={repertoire?.side} />
+      <Openings repertoireId={id} />
     </div>
   )
 }

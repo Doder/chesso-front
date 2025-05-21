@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import { DateTime } from 'luxon'
-import { getRepertoires, createRepertoire, deleteRepertoire } from '@/api/repertoire'
-import { RepertoireModal } from '../components/repertoire-modal'
+import { getOpenings, createOpening, deleteOpening } from '@/api/openings'
+import { OpeningModal } from '../components/opening-modal'
 import { useNavigate } from 'react-router-dom'
 import {
   Dialog,
@@ -14,31 +14,31 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 
-export function Repertoires() {
-  const [repertoires, setRepertoires] = useState([])
+export function Openings() {
+  const [openings, setOpenings] = useState([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null })
   const navigate = useNavigate()
 
   useEffect(() => {
-    fetchRepertoires()
+    fetchOpenings()
   }, [])
 
-  const fetchRepertoires = async () => {
+  const fetchOpenings = async () => {
     try {
-      const { data } = await getRepertoires()
-      setRepertoires(data)
+      const { data } = await getOpenings()
+      setOpenings(data)
     } catch (error) {
-      console.error('Error fetching repertoires:', error)
+      console.error('Error fetching openings:', error)
     }
   }
 
-  const handleCreateRepertoire = async (data) => {
+  const handleCreateOpening = async (data) => {
     try {
-      await createRepertoire(data)
-      fetchRepertoires()
+      await createOpening(data)
+      fetchOpenings()
     } catch (error) {
-      console.error('Error creating repertoire:', error)
+      console.error('Error creating opening:', error)
     }
   }
 
@@ -50,11 +50,11 @@ export function Repertoires() {
   const handleDelete = async () => {
     if (deleteDialog.id) {
       try {
-        await deleteRepertoire(deleteDialog.id)
-        fetchRepertoires()
+        await deleteOpening(deleteDialog.id)
+        fetchOpenings()
         setDeleteDialog({ open: false, id: null })
       } catch (error) {
-        console.error('Error deleting repertoire:', error)
+        console.error('Error deleting opening:', error)
       }
     }
   }
@@ -62,13 +62,13 @@ export function Repertoires() {
   return (
     <div className="container py-6">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-semibold">Repertoires</h2>
+        <h2 className="text-2xl font-semibold">Openings</h2>
         <button
           onClick={() => setIsModalOpen(true)}
           className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
         >
           <Plus className="w-4 h-4" />
-          New Repertoire
+          New Opening
         </button>
       </div>
       <div className="border border-border rounded-lg overflow-hidden">
@@ -76,36 +76,38 @@ export function Repertoires() {
           <thead>
             <tr className="bg-secondary/5 border-b border-border">
               <th className="px-4 py-3 text-left font-semibold">Name</th>
+              <th className="px-4 py-3 text-left font-semibold">Side</th>
               <th className="px-4 py-3 text-left font-semibold">Created</th>
               <th className="px-4 py-3 text-left font-semibold">Updated</th>
               <th className="px-4 py-3 text-right font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {repertoires.map((repertoire) => (
+            {openings.map((opening) => (
               <tr 
-                key={repertoire.ID} 
+                key={opening.ID} 
                 className="border-b border-border last:border-0 hover:bg-secondary/5 cursor-pointer"
-                onClick={() => navigate(`/repertoire/${repertoire.ID}`)}
+                onClick={() => navigate(`/opening/${opening.ID}`)}
               >
-                <td className="px-4 py-3">{repertoire.name}</td>
+                <td className="px-4 py-3">{opening.name}</td>
+                <td className="px-4 py-3">{opening.side}</td>
                 <td className="px-4 py-3">
-                  {repertoire.CreatedAt && 
-                    DateTime.fromISO(repertoire.CreatedAt, { zone: 'utc' })
+                  {opening.CreatedAt && 
+                    DateTime.fromISO(opening.CreatedAt, { zone: 'utc' })
                       .setZone('local')
                       .toFormat('dd.MM.yyyy HH:mm')
                   }
                 </td>
                 <td className="px-4 py-3">
-                  {repertoire.UpdatedAt && 
-                    DateTime.fromISO(repertoire.UpdatedAt, { zone: 'utc' })
+                  {opening.UpdatedAt && 
+                    DateTime.fromISO(opening.UpdatedAt, { zone: 'utc' })
                       .setZone('local')
                       .toFormat('dd.MM.yyyy HH:mm')
                   }
                 </td>
                 <td className="px-4 py-3 text-right">
                   <button
-                    onClick={(e) => handleDeleteClick(e, repertoire.ID)}
+                    onClick={(e) => handleDeleteClick(e, opening.ID)}
                     className="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -113,28 +115,28 @@ export function Repertoires() {
                 </td>
               </tr>
             ))}
-            {repertoires.length === 0 && (
+            {openings.length === 0 && (
               <tr>
                 <td colSpan="2" className="px-4 py-3 text-center text-muted-foreground">
-                  No repertoires found
+                  No openings found
                 </td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
-      <RepertoireModal
+      <OpeningModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSubmit={handleCreateRepertoire}
+        onSubmit={handleCreateOpening}
       />
 
       <Dialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ open, id: open ? deleteDialog.id : null })}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Repertoire</DialogTitle>
+            <DialogTitle>Delete Opening</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this repertoire? This action cannot be undone.
+              Are you sure you want to delete this opening? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
