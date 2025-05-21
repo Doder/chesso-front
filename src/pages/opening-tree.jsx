@@ -118,36 +118,50 @@ export function OpeningTree({ openingId, side }) {
           <div className="border border-border rounded-lg overflow-hidden">
             <div className="bg-secondary/5 border-b border-border px-4 py-3">
               <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold">Opening Explorer</h2>
-                <span className="text-sm text-muted-foreground">Master Games</span>
+                <h2 className="text-lg font-semibold">Next Moves</h2>
               </div>
             </div>
             <div className="p-4 space-y-4">
               <div className="space-y-2">
                 {/* Mock opening moves */}
                 <div className="flex items-center justify-between p-2 hover:bg-secondary/20 rounded cursor-pointer">
-                  <div className="flex items-center gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     <span className="font-mono">e4</span>
-                    <span className="text-sm text-muted-foreground">King's Pawn</span>
+                    <span className="text-sm text-muted-foreground">Pirc</span>
                   </div>
-                  <span className="text-sm">44%</span>
                 </div>
                 <div className="flex items-center justify-between p-2 hover:bg-secondary/20 rounded cursor-pointer">
-                  <div className="flex items-center gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     <span className="font-mono">d4</span>
-                    <span className="text-sm text-muted-foreground">Queen's Pawn</span>
+                    <span className="text-sm text-muted-foreground">Pirc</span>
                   </div>
-                  <span className="text-sm">35%</span>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between p-2 hover:bg-secondary/20 rounded cursor-pointer">
-                  <div className="flex items-center gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     <span className="font-mono">Nf3</span>
-                    <span className="text-sm text-muted-foreground">Reti Opening</span>
+                    <span className="text-sm text-muted-foreground">Pirc</span>
                   </div>
-                  <span className="text-sm">15%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="border border-border rounded-lg overflow-hidden">
+            <div className="bg-secondary/5 border-b border-border px-4 py-3">
+              <div className="flex justify-between items-center">
+                <h2 className="text-lg font-semibold">Prev Moves</h2>
+              </div>
+            </div>
+            <div className="p-4 space-y-4">
+              <div className="space-y-2">
+                {/* Mock opening moves */}
+                <div className="flex items-center justify-between p-2 hover:bg-secondary/20 rounded cursor-pointer">
+                  <div className="grid grid-cols-2 gap-2">
+                    <span className="font-mono">e4</span>
+                    <span className="text-sm text-muted-foreground">Pirc</span>
+                  </div>
                 </div>
               </div>
             </div>

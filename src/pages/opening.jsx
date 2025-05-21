@@ -29,11 +29,8 @@ export function Opening() {
 
   return (
     <div className="">
-      <div className="container py-6">
+      <div className="container pb-2">
         <Breadcrumb items={breadcrumbItems} />
-        <h2 className="text-xl font-semibold">
-          {opening?.name || 'Loading...'}
-        </h2>
       </div>
       <OpeningTree openingId={id} side={opening?.side} />
     </div>
