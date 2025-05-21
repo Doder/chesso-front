@@ -7,3 +7,7 @@ export const getRepertoires = () => {
 export const createRepertoire = (data) => {
   return api.post('/repertoires/', data)
 }
+
+export const deleteRepertoire = (id) => {
+  return api.delete(`/repertoires/${id}`)
+}

@@ -1,13 +1,23 @@
 import { useState, useEffect } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import { DateTime } from 'luxon'
-import { getRepertoires, createRepertoire } from '@/api/repertoire'
+import { getRepertoires, createRepertoire, deleteRepertoire } from '@/api/repertoire'
 import { RepertoireModal } from '../components/repertoire-modal'
 import { useNavigate } from 'react-router-dom'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 
 export function Repertoires() {
   const [repertoires, setRepertoires] = useState([])
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null })
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -32,6 +42,23 @@ export function Repertoires() {
     }
   }
 
+  const handleDeleteClick = (e, id) => {
+    e.stopPropagation()
+    setDeleteDialog({ open: true, id })
+  }
+
+  const handleDelete = async () => {
+    if (deleteDialog.id) {
+      try {
+        await deleteRepertoire(deleteDialog.id)
+        fetchRepertoires()
+        setDeleteDialog({ open: false, id: null })
+      } catch (error) {
+        console.error('Error deleting repertoire:', error)
+      }
+    }
+  }
+
   return (
     <div className="container py-6">
       <div className="flex justify-between items-center mb-4">
@@ -51,6 +78,7 @@ export function Repertoires() {
               <th className="px-4 py-3 text-left font-semibold">Name</th>
               <th className="px-4 py-3 text-left font-semibold">Created</th>
               <th className="px-4 py-3 text-left font-semibold">Updated</th>
+              <th className="px-4 py-3 text-right font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -75,6 +103,14 @@ export function Repertoires() {
                       .toFormat('dd.MM.yyyy HH:mm')
                   }
                 </td>
+                <td className="px-4 py-3 text-right">
+                  <button
+                    onClick={(e) => handleDeleteClick(e, repertoire.ID)}
+                    className="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </td>
               </tr>
             ))}
             {repertoires.length === 0 && (
@@ -92,6 +128,25 @@ export function Repertoires() {
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleCreateRepertoire}
       />
+
+      <Dialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ open, id: open ? deleteDialog.id : null })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Repertoire</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this repertoire? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialog({ open: false, id: null })}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDelete}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
