@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Plus } from 'lucide-react'
+import { DateTime } from 'luxon'
 import { getRepertoires, createRepertoire } from '@/api/repertoire'
 import { RepertoireModal } from '../components/repertoire-modal'
 import { useNavigate } from 'react-router-dom'
@@ -49,6 +50,7 @@ export function Repertoires() {
             <tr className="bg-secondary/5 border-b border-border">
               <th className="px-4 py-3 text-left font-semibold">Name</th>
               <th className="px-4 py-3 text-left font-semibold">Created</th>
+              <th className="px-4 py-3 text-left font-semibold">Updated</th>
             </tr>
           </thead>
           <tbody>
@@ -59,7 +61,20 @@ export function Repertoires() {
                 onClick={() => navigate(`/repertoire/${repertoire.ID}`)}
               >
                 <td className="px-4 py-3">{repertoire.name}</td>
-                <td className="px-4 py-3">{new Date(repertoire.created_at).toLocaleDateString()}</td>
+                <td className="px-4 py-3">
+                  {repertoire.CreatedAt && 
+                    DateTime.fromISO(repertoire.CreatedAt, { zone: 'utc' })
+                      .setZone('local')
+                      .toFormat('dd.MM.yyyy HH:mm')
+                  }
+                </td>
+                <td className="px-4 py-3">
+                  {repertoire.UpdatedAt && 
+                    DateTime.fromISO(repertoire.UpdatedAt, { zone: 'utc' })
+                      .setZone('local')
+                      .toFormat('dd.MM.yyyy HH:mm')
+                  }
+                </td>
               </tr>
             ))}
             {repertoires.length === 0 && (
