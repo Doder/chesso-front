@@ -59,13 +59,12 @@ export function OpeningTree({ repertoireId }) {
   }
 
   return (
-    <div className="container py-6">
+    <div className="container">
       <div className="flex gap-6">
-        <div className="w-2/3">
+        <div className="flex-[2]">
             <Chessboard
               position={position}
               onPieceDrop={onDrop}
-              boardWidth={window.innerHeight - 200}
               customDarkSquareStyle={{ backgroundColor: '#D3D3D3' }}
               customLightSquareStyle={{ backgroundColor: '#EBEBEB' }}
               customBoardStyle={
@@ -113,7 +112,7 @@ export function OpeningTree({ repertoireId }) {
             </button>
           </div>
         </div>
-        <div className="w-1/3 space-y-4">
+        <div className="flex-1 space-y-4">
           {/* Opening Explorer */}
           <div className="border border-border rounded-lg overflow-hidden">
             <div className="bg-secondary/5 border-b border-border px-4 py-3">

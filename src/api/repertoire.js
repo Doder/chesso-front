@@ -4,6 +4,10 @@ export const getRepertoires = () => {
   return api.get('/repertoires/')
 }
 
+export const getRepertoire = (id) => {
+  return api.get(`/repertoires/${id}`)
+}
+
 export const createRepertoire = (data) => {
   return api.post('/repertoires/', data)
 }
