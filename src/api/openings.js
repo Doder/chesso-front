@@ -8,8 +8,8 @@ export const getOpening = (id) => {
   return api.get(`/openings/${id}`)
 }
 
-export const createOpening = (data) => {
-  return api.post('/openings/', data)
+export const createOpening = (data, repertoireId) => {
+  return api.post('/openings/', {...data, repertoire_id: repertoireId})
 }
 
 export const deleteOpening = (id) => {

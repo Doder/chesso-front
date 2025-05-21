@@ -3,7 +3,7 @@ import { Plus, Trash2 } from 'lucide-react'
 import { DateTime } from 'luxon'
 import { getOpenings, createOpening, deleteOpening } from '@/api/openings'
 import { OpeningModal } from '../components/opening-modal'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import {
   Dialog,
   DialogContent,
@@ -13,12 +13,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { Breadcrumb } from '@/components/ui/breadcrumb'
 
 export function Openings() {
   const [openings, setOpenings] = useState([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null })
   const navigate = useNavigate()
+  const { id: repertoireId } = useParams()
 
   useEffect(() => {
     fetchOpenings()
@@ -35,7 +37,7 @@ export function Openings() {
 
   const handleCreateOpening = async (data) => {
     try {
-      await createOpening(data)
+      await createOpening(data, Number(repertoireId))
       fetchOpenings()
     } catch (error) {
       console.error('Error creating opening:', error)
@@ -59,8 +61,14 @@ export function Openings() {
     }
   }
 
+  const breadcrumbItems = [
+    { label: 'Repertoires', href: '/repertoires' },
+    { label: 'Openings', href: null }
+  ]
+
   return (
-    <div className="container py-6">
+    <div className="container mx-auto py-6">
+      <Breadcrumb items={breadcrumbItems} />
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-semibold">Openings</h2>
         <button

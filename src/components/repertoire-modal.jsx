@@ -10,13 +10,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 
 const formSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -61,27 +54,6 @@ export function RepertoireModal({ isOpen, onClose, onSubmit }) {
                       className="w-full p-2 border border-border rounded"
                     />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="side"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Side</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select side" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="w">White</SelectItem>
-                      <SelectItem value="b">Black</SelectItem>
-                    </SelectContent>
-                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
