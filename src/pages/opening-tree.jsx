@@ -3,7 +3,7 @@ import { Chessboard } from 'react-chessboard'
 import { useState } from 'react'
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
 
-export function OpeningTree({ repertoireId }) {
+export function OpeningTree({ repertoireId, side }) {
   const [game] = useState(() => new Chess())
   const [position, setPosition] = useState(game.fen())
   const [history, setHistory] = useState([])
@@ -65,6 +65,7 @@ export function OpeningTree({ repertoireId }) {
             <Chessboard
               position={position}
               onPieceDrop={onDrop}
+              boardOrientation={side === 'b' ? 'black' : 'white'}
               customDarkSquareStyle={{ backgroundColor: '#D3D3D3' }}
               customLightSquareStyle={{ backgroundColor: '#EBEBEB' }}
               customBoardStyle={

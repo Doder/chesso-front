@@ -76,6 +76,7 @@ export function Repertoires() {
           <thead>
             <tr className="bg-secondary/5 border-b border-border">
               <th className="px-4 py-3 text-left font-semibold">Name</th>
+              <th className="px-4 py-3 text-left font-semibold">Side</th>
               <th className="px-4 py-3 text-left font-semibold">Created</th>
               <th className="px-4 py-3 text-left font-semibold">Updated</th>
               <th className="px-4 py-3 text-right font-semibold">Actions</th>
@@ -89,6 +90,7 @@ export function Repertoires() {
                 onClick={() => navigate(`/repertoire/${repertoire.ID}`)}
               >
                 <td className="px-4 py-3">{repertoire.name}</td>
+                <td className="px-4 py-3">{repertoire.side}</td>
                 <td className="px-4 py-3">
                   {repertoire.CreatedAt && 
                     DateTime.fromISO(repertoire.CreatedAt, { zone: 'utc' })

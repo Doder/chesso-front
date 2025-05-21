@@ -27,7 +27,7 @@ export function Repertoire() {
           {repertoire?.name || 'Loading...'}
         </h2>
       </div>
-      <OpeningTree repertoireId={id} />
+      <OpeningTree repertoireId={id} side={repertoire?.side} />
     </div>
   )
 }
