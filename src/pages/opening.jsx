@@ -23,7 +23,7 @@ export function Opening() {
 
   const breadcrumbItems = [
     { label: 'Repertoires', href: '/repertoires' },
-    { label: 'Openings', href: '/openings' },
+    { label: 'Openings', href: `/repertoire/${opening?.repertoire_id}` },
     { label: opening?.name || 'Loading...', href: null }
   ]
 

@@ -1,13 +1,48 @@
 import { Chess } from 'chess.js'
 import { Chessboard } from 'react-chessboard'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
+import { getNextPositions, createPosition } from '@/api/positions'
+import { useParams } from 'react-router-dom'
 
 export function OpeningTree({ openingId, side }) {
-  const [game] = useState(() => new Chess())
+  const [game, setGame] = useState(() => new Chess())
   const [position, setPosition] = useState(game.fen())
   const [history, setHistory] = useState([])
   const [currentMove, setCurrentMove] = useState(-1)
+  const [nextMoves, setNextMoves] = useState([])
+  const [prevMoves, setPrevMoves] = useState([])
+  const {id: opening_id} = useParams()
+
+  const fetchPositions = async (fen, lastMove) => {
+    try {
+      const { data } = await getNextPositions(fen)
+      console.log('DATA', data)
+      if (data.message) return
+      if (data.length === 0) {
+        addPosition(fen, lastMove)
+        setNextMoves(data)
+      } else if (data.length > 0) {
+        setNextMoves(data)
+      }
+    } catch (error) {
+      console.error('Error fetching positions:', error)
+    }
+  }
+
+  const addPosition = async (fen, lastMove) => {
+    try {
+      const { data } = await createPosition(fen, lastMove, Number(opening_id))
+      console.log(data)
+    } catch (error) {
+      console.error('Error creating position:', error)
+    }
+  }
+
+  useEffect(() => {
+    console.log(currentMove, history[currentMove])
+    fetchPositions(position, history[currentMove])
+  }, [position, history, currentMove])
 
   const goToMove = (moveIndex) => {
     const newGame = new Chess()
@@ -16,6 +51,7 @@ export function OpeningTree({ openingId, side }) {
     }
     setPosition(newGame.fen())
     setCurrentMove(moveIndex)
+    setGame(newGame);
   }
 
   const goToPrevMove = () => {
@@ -41,11 +77,19 @@ export function OpeningTree({ openingId, side }) {
 
   function onDrop(sourceSquare, targetSquare) {
     try {
-      const move = game.move({
-        from: sourceSquare,
-        to: targetSquare,
-        promotion: 'q'
-      })
+      let move;
+      
+      if (typeof sourceSquare === 'string' && typeof targetSquare === 'undefined') {
+        // If only one parameter is passed, treat it as SAN notation
+        move = game.move(sourceSquare)
+      } else {
+        // Otherwise treat as coordinate notation (from-to squares)
+        move = game.move({
+          from: sourceSquare,
+          to: targetSquare,
+          promotion: 'q'
+        })
+      }
 
       if (move === null) return false
       setPosition(game.fen())
@@ -123,29 +167,21 @@ export function OpeningTree({ openingId, side }) {
             </div>
             <div className="p-4 space-y-4">
               <div className="space-y-2">
-                {/* Mock opening moves */}
-                <div className="flex items-center justify-between p-2 hover:bg-secondary/20 rounded cursor-pointer">
-                  <div className="grid grid-cols-2 gap-2">
-                    <span className="font-mono">e4</span>
-                    <span className="text-sm text-muted-foreground">Pirc</span>
+                {nextMoves?.map((move, index) => (
+                  <div 
+                    key={index} 
+                    className="flex items-center justify-between p-2 hover:bg-secondary/20 rounded cursor-pointer"
+                    onClick={() => onDrop(move.last_move)}
+                  >
+                    <div className="grid grid-cols-2 gap-2">
+                      <span className="font-mono">{move.last_move}</span>
+                      <span className="text-sm text-muted-foreground">{move.opening_name}</span>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center justify-between p-2 hover:bg-secondary/20 rounded cursor-pointer">
-                  <div className="grid grid-cols-2 gap-2">
-                    <span className="font-mono">d4</span>
-                    <span className="text-sm text-muted-foreground">Pirc</span>
-                  </div>
-                </div>
+                ))}
               </div>
 
-              <div className="space-y-2">
-                <div className="flex items-center justify-between p-2 hover:bg-secondary/20 rounded cursor-pointer">
-                  <div className="grid grid-cols-2 gap-2">
-                    <span className="font-mono">Nf3</span>
-                    <span className="text-sm text-muted-foreground">Pirc</span>
-                  </div>
-                </div>
-              </div>
+
             </div>
           </div>
           <div className="border border-border rounded-lg overflow-hidden">
@@ -156,13 +192,18 @@ export function OpeningTree({ openingId, side }) {
             </div>
             <div className="p-4 space-y-4">
               <div className="space-y-2">
-                {/* Mock opening moves */}
-                <div className="flex items-center justify-between p-2 hover:bg-secondary/20 rounded cursor-pointer">
-                  <div className="grid grid-cols-2 gap-2">
-                    <span className="font-mono">e4</span>
-                    <span className="text-sm text-muted-foreground">Pirc</span>
+                {prevMoves.map((move, index) => (
+                  <div 
+                    key={index} 
+                    className="flex items-center justify-between p-2 hover:bg-secondary/20 rounded cursor-pointer"
+                    onClick={() => onDrop(move.from, move.to)}
+                  >
+                    <div className="grid grid-cols-2 gap-2">
+                      <span className="font-mono">{move.san}</span>
+                      <span className="text-sm text-muted-foreground">{move.name}</span>
+                    </div>
                   </div>
-                </div>
+                ))}
               </div>
             </div>
           </div>
