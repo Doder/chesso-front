@@ -1,7 +1,7 @@
 import api from '@/lib/axios'
 
-export const getOpenings = () => {
-  return api.get('/openings/')
+export const getOpenings = (id) => {
+  return api.get(`/repertoires/${id}`)
 }
 
 export const getOpening = (id) => {

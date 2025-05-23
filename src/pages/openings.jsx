@@ -28,8 +28,8 @@ export function Openings() {
 
   const fetchOpenings = async () => {
     try {
-      const { data } = await getOpenings()
-      setOpenings(data)
+      const { data } = await getOpenings(repertoireId)
+      setOpenings(data.openings)
     } catch (error) {
       console.error('Error fetching openings:', error)
     }
