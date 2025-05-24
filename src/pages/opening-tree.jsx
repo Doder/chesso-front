@@ -21,7 +21,6 @@ export function OpeningTree({ openingId, repertoireId, side }) {
   const fetchPositions = async (fromFen, fen, lastMove) => {
     try {
       const { data } = await getNextPositions(fen, repertoireId)
-      console.log('dd', data)
 
       if (data.message) {
         return
@@ -33,8 +32,8 @@ export function OpeningTree({ openingId, repertoireId, side }) {
       }
     } catch (error) {
       if (error.status === 404) {
-        console.log('added', lastMove)
         addPosition(fromFen, fen, lastMove)
+        setNextMoves([])
         return
       }
       console.error('Error fetching positions:', error)
@@ -50,7 +49,6 @@ export function OpeningTree({ openingId, repertoireId, side }) {
   }
 
   useEffect(() => {
-    console.log(position, history, currentMove)
     fetchPositions(prevPosition, position, history[currentMove])
   }, [position, history, currentMove])
 
