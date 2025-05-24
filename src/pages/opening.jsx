@@ -5,13 +5,13 @@ import { getOpening } from '@/api/openings'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
 
 export function Opening() {
-  const { id } = useParams()
+  const { rid, oid } = useParams()
   const [opening, setOpening] = useState(null)
 
   useEffect(() => {
     const fetchOpening = async () => {
       try {
-        const { data } = await getOpening(id)
+        const { data } = await getOpening(oid)
         setOpening(data)
       } catch (error) {
         console.error('Error fetching opening:', error)
@@ -19,7 +19,7 @@ export function Opening() {
     }
 
     fetchOpening()
-  }, [id])
+  }, [oid])
 
   const breadcrumbItems = [
     { label: 'Repertoires', href: '/repertoires' },
@@ -32,7 +32,7 @@ export function Opening() {
       <div className="container pb-2">
         <Breadcrumb items={breadcrumbItems} />
       </div>
-      <OpeningTree openingId={id} side={opening?.side} />
+      <OpeningTree openingId={oid} repertoireId={rid} side={opening?.side} />
     </div>
   )
 }

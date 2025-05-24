@@ -3,45 +3,55 @@ import { Chessboard } from 'react-chessboard'
 import { useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
 import { getNextPositions, createPosition } from '@/api/positions'
-import { useParams } from 'react-router-dom'
 
-export function OpeningTree({ openingId, side }) {
+export function OpeningTree({ openingId, repertoireId, side }) {
   const [game, setGame] = useState(() => new Chess())
   const [position, setPosition] = useState(game.fen())
+  const [prevPosition, setPrevPosition] = useState()
   const [history, setHistory] = useState([])
   const [currentMove, setCurrentMove] = useState(-1)
   const [nextMoves, setNextMoves] = useState([])
   const [prevMoves, setPrevMoves] = useState([])
-  const {id: opening_id} = useParams()
 
-  const fetchPositions = async (fen, lastMove) => {
+  const handleNewMove = (newFen) => {
+    setPrevPosition(position)
+    setPosition(newFen)
+  }
+
+  const fetchPositions = async (fromFen, fen, lastMove) => {
     try {
-      const { data } = await getNextPositions(fen)
-      console.log('DATA', data)
-      if (data.message) return
+      const { data } = await getNextPositions(fen, repertoireId)
+      console.log('dd', data)
+
+      if (data.message) {
+        return
+      }
       if (data.length === 0) {
-        addPosition(fen, lastMove)
         setNextMoves(data)
       } else if (data.length > 0) {
         setNextMoves(data)
       }
     } catch (error) {
+      if (error.status === 404) {
+        console.log('added', lastMove)
+        addPosition(fromFen, fen, lastMove)
+        return
+      }
       console.error('Error fetching positions:', error)
     }
   }
 
-  const addPosition = async (fen, lastMove) => {
+  const addPosition = async (fromFen, fen, lastMove) => {
     try {
-      const { data } = await createPosition(fen, lastMove, Number(opening_id))
-      console.log(data)
+      const { data } = await createPosition(fromFen, fen, lastMove, Number(openingId), Number(repertoireId))
     } catch (error) {
       console.error('Error creating position:', error)
     }
   }
 
   useEffect(() => {
-    console.log(currentMove, history[currentMove])
-    fetchPositions(position, history[currentMove])
+    console.log(position, history, currentMove)
+    fetchPositions(prevPosition, position, history[currentMove])
   }, [position, history, currentMove])
 
   const goToMove = (moveIndex) => {
@@ -49,7 +59,7 @@ export function OpeningTree({ openingId, side }) {
     for (let i = 0; i <= moveIndex && i < history.length; i++) {
       newGame.move(history[i])
     }
-    setPosition(newGame.fen())
+    handleNewMove(newGame.fen())
     setCurrentMove(moveIndex)
     setGame(newGame);
   }
@@ -92,7 +102,7 @@ export function OpeningTree({ openingId, side }) {
       }
 
       if (move === null) return false
-      setPosition(game.fen())
+      handleNewMove(game.fen())
       const newHistory = game.history()
       setHistory(newHistory)
       setCurrentMove(newHistory.length - 1)

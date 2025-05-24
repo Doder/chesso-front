@@ -95,7 +95,7 @@ export function Openings() {
               <tr 
                 key={opening.ID} 
                 className="border-b border-border last:border-0 hover:bg-secondary/5 cursor-pointer"
-                onClick={() => navigate(`/opening/${opening.ID}`)}
+                onClick={() => navigate(`opening/${opening.ID}`)}
               >
                 <td className="px-4 py-3">{opening.name}</td>
                 <td className="px-4 py-3">{opening.side}</td>

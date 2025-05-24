@@ -46,8 +46,7 @@ function App() {
           <Route path="games" element={<GamesPage />} />
           <Route path="repertoires" element={<Repertoires />} />
           <Route path="repertoire/:id" element={<Repertoire />} />
-          <Route path="openings" element={<Openings />} />
-          <Route path="opening/:id" element={<Opening />} />
+          <Route path="repertoire/:rid/opening/:oid" element={<Opening />} />
         </Route>
       </Routes>
     </Router>
