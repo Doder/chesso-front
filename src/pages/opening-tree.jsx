@@ -166,55 +166,6 @@ export function OpeningTree({ openingId, repertoireId, side }) {
           </div>
         </div>
         <div className="flex-1 space-y-4">
-          {/* Opening Explorer */}
-          <div className="border border-border rounded-lg overflow-hidden">
-            <div className="bg-secondary/5 border-b border-border px-4 py-3">
-              <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold">Next Moves</h2>
-              </div>
-            </div>
-            <div className="p-4 space-y-4">
-              <div className="space-y-2">
-                {nextMoves?.map((move, index) => (
-                  <div 
-                    key={index} 
-                    className="flex items-center justify-between p-2 hover:bg-secondary/20 rounded cursor-pointer"
-                    onClick={() => onDrop(move.last_move)}
-                  >
-                    <div className="grid grid-cols-2 gap-2">
-                      <span className="font-mono">{move.last_move}</span>
-                      <span className="text-sm text-muted-foreground">{move.opening_name}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-
-            </div>
-          </div>
-          <div className="border border-border rounded-lg overflow-hidden">
-            <div className="bg-secondary/5 border-b border-border px-4 py-3">
-              <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold">Prev Moves</h2>
-              </div>
-            </div>
-            <div className="p-4 space-y-4">
-              <div className="space-y-2">
-                {prevMoves.map((move, index) => (
-                  <div 
-                    key={index} 
-                    className="flex items-center justify-between p-2 hover:bg-secondary/20 rounded cursor-pointer"
-                    onClick={() => onDrop(move.from, move.to)}
-                  >
-                    <div className="grid grid-cols-2 gap-2">
-                      <span className="font-mono">{move.san}</span>
-                      <span className="text-sm text-muted-foreground">{move.name}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
           {/* Game moves */}
           <div className="border border-border rounded-lg overflow-hidden">
             <div className="bg-secondary/5 border-b border-border px-4 py-3">
@@ -255,7 +206,56 @@ export function OpeningTree({ openingId, repertoireId, side }) {
               </div>
             </div>
           </div>
-        </div>
+
+          {/* Next Moves  */}
+          <div className="border border-border rounded-lg overflow-hidden">
+            <div className="bg-secondary/5 border-b border-border px-4 py-3">
+              <div className="flex justify-between items-center">
+                <h2 className="text-lg font-semibold">Next Moves</h2>
+              </div>
+            </div>
+            <div className="p-4 space-y-4">
+              <div className="space-y-2">
+                {nextMoves?.map((move, index) => (
+                  <div 
+                    key={index} 
+                    className="flex items-center justify-between p-2 hover:bg-secondary/20 rounded cursor-pointer"
+                    onClick={() => onDrop(move.last_move)}
+                  >
+                    <div className="grid grid-cols-2 gap-2">
+                      <span className="font-mono">{move.last_move}</span>
+                      <span className="text-sm text-muted-foreground">{move.opening_name}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          {/* Prev Moves */}
+          <div className="border border-border rounded-lg overflow-hidden">
+            <div className="bg-secondary/5 border-b border-border px-4 py-3">
+              <div className="flex justify-between items-center">
+                <h2 className="text-lg font-semibold">Prev Moves</h2>
+              </div>
+            </div>
+            <div className="p-4 space-y-4">
+              <div className="space-y-2">
+                {prevMoves.map((move, index) => (
+                  <div 
+                    key={index} 
+                    className="flex items-center justify-between p-2 hover:bg-secondary/20 rounded cursor-pointer"
+                    onClick={() => onDrop(move.from, move.to)}
+                  >
+                    <div className="grid grid-cols-2 gap-2">
+                      <span className="font-mono">{move.san}</span>
+                      <span className="text-sm text-muted-foreground">{move.name}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+                  </div>
       </div>
     </div>
   )
