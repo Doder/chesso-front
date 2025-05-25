@@ -10,7 +10,7 @@ export default function Layout() {
       <header className="border-b border-border">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-1">
-            <img src="/rook.svg" className="size-6" />
+            <img src="/logo.svg" className="size-12" />
             <Link to="/">
               <h1 className="text-xl font-bold">Chesso</h1>
             </Link>
