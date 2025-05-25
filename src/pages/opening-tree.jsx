@@ -82,6 +82,7 @@ export function OpeningTree({ openingId, repertoireId, side }) {
     goToMove(history.length - 1)
   }
   const [copySuccess, setCopySuccess] = useState(false)
+  const [boardOrientation, setBoardOrientation] = useState(side === 'b' ? 'black' : 'white')
 
   function onDrop(sourceSquare, targetSquare) {
     try {
@@ -117,7 +118,7 @@ export function OpeningTree({ openingId, repertoireId, side }) {
             <Chessboard
               position={position}
               onPieceDrop={onDrop}
-              boardOrientation={side === 'b' ? 'black' : 'white'}
+              boardOrientation={boardOrientation}
               customDarkSquareStyle={{ backgroundColor: '#D3D3D3' }}
               customLightSquareStyle={{ backgroundColor: '#EBEBEB' }}
               customBoardStyle={
@@ -162,6 +163,13 @@ export function OpeningTree({ openingId, repertoireId, side }) {
               title="Go to end"
             >
               <ChevronsRight className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => setBoardOrientation(current => current === 'white' ? 'black' : 'white')}
+              className="p-2 rounded hover:bg-secondary/20"
+              title="Flip board"
+            >
+              ↻
             </button>
           </div>
         </div>
