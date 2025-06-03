@@ -98,6 +98,19 @@ export function OpeningTree({openingId, repertoireId, side}) {
   const goToEnd = () => {
     goToMove(history.length - 1)
   }
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'ArrowLeft') {
+        goToPrevMove()
+      } else if (e.key === 'ArrowRight') {
+        goToNextMove()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [goToNextMove, goToPrevMove])
+
   const [copySuccess, setCopySuccess] = useState(false)
   const [boardOrientation, setBoardOrientation] = useState(side === 'b' ? 'black' : 'white')
 
