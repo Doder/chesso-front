@@ -1,65 +1,82 @@
-import { Chess } from 'chess.js'
-import { Chessboard } from 'react-chessboard'
-import { useState, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
-import { getNextPositions, createPosition } from '@/api/positions'
+import {Chess} from 'chess.js'
+import {Chessboard} from 'react-chessboard'
+import {useState, useRef, useEffect, useCallback} from 'react'
+import {ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight} from 'lucide-react'
+import {getNextPositions} from '@/api/positions'
 
-export function OpeningTree({ openingId, repertoireId, side }) {
+function getSanMoveFromFens(fromFen, toFen) {
+  const chess = new Chess(fromFen);
+  const moves = chess.moves({verbose: true});
+  for (const move of moves) {
+    if (move.after === toFen) {
+      return move.san;
+    }
+  }
+  console.warn("No move found from FEN:", fromFen, "to FEN:", toFen);
+  return null;
+}
+
+export function OpeningTree({openingId, repertoireId, side}) {
   const [game, setGame] = useState(() => new Chess())
   const [position, setPosition] = useState(game.fen())
-  const [prevPosition, setPrevPosition] = useState()
+  const prevPosition = useRef(null)
   const [history, setHistory] = useState([])
   const [currentMove, setCurrentMove] = useState(-1)
   const [nextMoves, setNextMoves] = useState([])
-  const [prevMoves, setPrevMoves] = useState([])
+  const [arrows, setArrows] = useState([])
+
+  const setNextMovesAndArrows = useCallback((nextMoves) => {
+    nextMoves = nextMoves.map(nm => ({...nm, last_move: getSanMoveFromFens(position, nm.fen)}))
+    console.log('nextMoves', nextMoves)
+    setNextMoves(nextMoves)
+    const newArrows = []
+    const legalMoves = game.moves({verbose: true})
+    for (const nm of nextMoves) {
+      const lastMove = legalMoves.find(m => m.san === nm.last_move)
+      if (lastMove) {
+        newArrows.push([lastMove.from, lastMove.to, `hsla(230, 100%, ${50 + (nextMoves.indexOf(nm) * 10)}%, ${1 - (nextMoves.indexOf(nm) * 0.1)})`])
+      }
+    }
+    setArrows(newArrows)
+  }, [position, game])
 
   const handleNewMove = (newFen) => {
-    setPrevPosition(position)
+    prevPosition.current = position
     setPosition(newFen)
   }
 
-  const fetchPositions = async (fromFen, fen, lastMove) => {
+  const fetchPositions = useCallback(async (fromFen, fen) => {
     try {
-      const { data } = await getNextPositions(fen, repertoireId)
+      const {data} = await getNextPositions(fromFen, fen, repertoireId)
 
       if (data.message) {
         return
       }
-      if (data.length === 0) {
-        setNextMoves(data)
-      } else if (data.length > 0) {
-        setNextMoves(data)
+      if (data.length >= 0) {
+        setNextMovesAndArrows(data)
       }
     } catch (error) {
-      if (error.status === 404) {
-        addPosition(fromFen, fen, lastMove)
-        setNextMoves([])
-        return
-      }
       console.error('Error fetching positions:', error)
     }
-  }
-
-  const addPosition = async (fromFen, fen, lastMove) => {
-    try {
-      const { data } = await createPosition(fromFen, fen, lastMove, Number(openingId), Number(repertoireId))
-    } catch (error) {
-      console.error('Error creating position:', error)
-    }
-  }
+  }, [repertoireId, setNextMovesAndArrows])
 
   useEffect(() => {
-    fetchPositions(prevPosition, position, history[currentMove])
-  }, [position, history, currentMove])
+    fetchPositions(prevPosition.current, position)
+  }, [position])
+
 
   const goToMove = (moveIndex) => {
     const newGame = new Chess()
+    prevPosition.current = null
     for (let i = 0; i <= moveIndex && i < history.length; i++) {
       newGame.move(history[i])
+      if (i === moveIndex - 1) {
+        prevPosition.current = newGame.fen()
+      }
     }
-    handleNewMove(newGame.fen())
+    setPosition(newGame.fen())
     setCurrentMove(moveIndex)
-    setGame(newGame);
+    setGame(newGame)
   }
 
   const goToPrevMove = () => {
@@ -87,7 +104,7 @@ export function OpeningTree({ openingId, repertoireId, side }) {
   function onDrop(sourceSquare, targetSquare) {
     try {
       let move;
-      
+
       if (typeof sourceSquare === 'string' && typeof targetSquare === 'undefined') {
         // If only one parameter is passed, treat it as SAN notation
         move = game.move(sourceSquare)
@@ -115,23 +132,67 @@ export function OpeningTree({ openingId, repertoireId, side }) {
     <div className="container">
       <div className="flex gap-6">
         <div className="flex-[2]">
-            <Chessboard
-              position={position}
-              onPieceDrop={onDrop}
-              boardOrientation={boardOrientation}
-              customDarkSquareStyle={{ backgroundColor: '#D3D3D3' }}
-              customLightSquareStyle={{ backgroundColor: '#EBEBEB' }}
-              customBoardStyle={
-                {
-                  margin: '0 auto',
-                  borderRadius: '5px',
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                }
+          <Chessboard
+            position={position}
+            onPieceDrop={onDrop}
+            boardOrientation={boardOrientation}
+            customDarkSquareStyle={{backgroundColor: '#D3D3D3'}}
+            customLightSquareStyle={{backgroundColor: '#EBEBEB'}}
+            customBoardStyle={
+              {
+                margin: '0 auto',
+                borderRadius: '5px',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
               }
-            />
+            }
+            areArrowsAllowed={false}
+            customArrows={arrows}
+          />
+        </div>
+        <div className="flex-1 space-y-2">
+          {/* Game moves */}
+          <div className="border border-border rounded-lg overflow-hidden">
+            <div className="bg-secondary/5 border-b border-border px-4 py-3">
+              <div className="flex justify-between items-center">
+                <h2 className="text-lg font-semibold">Game Moves</h2>
+                <button
+                  onClick={() => {
+                    const pgn = game.pgn()
+                    navigator.clipboard.writeText(pgn)
+                    setCopySuccess(true)
+                    setTimeout(() => setCopySuccess(false), 2000)
+                  }}
+                  className="text-sm text-muted-foreground hover:text-primary"
+                >
+                  {copySuccess ? 'Copied!' : 'Copy PGN'}
+                </button>
+              </div>
+            </div>
+            <div className="p-4">
+              <div className="flex flex-wrap gap-2">
+                {history.map((move, index) => {
+                  const moveNumber = Math.floor(index / 2) + 1
+                  const isWhiteMove = index % 2 === 0
+                  return (
+                    <div key={index} className="flex items-center">
+                      {isWhiteMove && (
+                        <span className="text-sm text-muted-foreground mr-1">{moveNumber}.</span>
+                      )}
+                      <button
+                        onClick={() => goToMove(index)}
+                        className={`px-2 py-1 rounded text-sm font-mono ${currentMove === index ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary/20'}`}
+                      >
+                        {move}
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
 
           {/* Move navigation */}
-          <div className="flex justify-center gap-2 mt-4">
+          <div className="flex gap-2">
             <button
               onClick={goToStart}
               disabled={currentMove < 0}
@@ -172,48 +233,6 @@ export function OpeningTree({ openingId, repertoireId, side }) {
               ↻
             </button>
           </div>
-        </div>
-        <div className="flex-1 space-y-4">
-          {/* Game moves */}
-          <div className="border border-border rounded-lg overflow-hidden">
-            <div className="bg-secondary/5 border-b border-border px-4 py-3">
-              <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold">Game Moves</h2>
-                <button 
-                  onClick={() => {
-                    const pgn = game.pgn()
-                    navigator.clipboard.writeText(pgn)
-                    setCopySuccess(true)
-                    setTimeout(() => setCopySuccess(false), 2000)
-                  }} 
-                  className="text-sm text-muted-foreground hover:text-primary"
-                >
-                  {copySuccess ? 'Copied!' : 'Copy PGN'}
-                </button>
-              </div>
-            </div>
-            <div className="p-4">
-              <div className="flex flex-wrap gap-2">
-                {history.map((move, index) => {
-                  const moveNumber = Math.floor(index / 2) + 1
-                  const isWhiteMove = index % 2 === 0
-                  return (
-                    <div key={index} className="flex items-center">
-                      {isWhiteMove && (
-                        <span className="text-sm text-muted-foreground mr-1">{moveNumber}.</span>
-                      )}
-                      <button
-                        onClick={() => goToMove(index)}
-                        className={`px-2 py-1 rounded text-sm font-mono ${currentMove === index ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary/20'}`}
-                      >
-                        {move}
-                      </button>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          </div>
 
           {/* Next Moves  */}
           <div className="border border-border rounded-lg overflow-hidden">
@@ -225,45 +244,23 @@ export function OpeningTree({ openingId, repertoireId, side }) {
             <div className="p-4 space-y-4">
               <div className="space-y-2">
                 {nextMoves?.map((move, index) => (
-                  <div 
-                    key={index} 
-                    className="flex items-center justify-between p-2 hover:bg-secondary/20 rounded cursor-pointer"
-                    onClick={() => onDrop(move.last_move)}
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-2 hover:bg-secondary/50 rounded"
                   >
-                    <div className="grid grid-cols-2 gap-2">
-                      <span className="font-mono">{move.last_move}</span>
-                      <span className="text-sm text-muted-foreground">{move.opening_name}</span>
+                    <div className="w-full grid grid-cols-6 gap-2">
+                      <span className="font-mono col-span-1 cursor-pointer"
+                        onClick={() => onDrop(move.last_move)}
+                      >{move.last_move}</span>
+                      <span className="col-span-1 text-sm text-muted-foreground">=</span>
+                      <span className="col-span-4 text-sm text-muted-foreground">comment here</span>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
           </div>
-          {/* Prev Moves */}
-          <div className="border border-border rounded-lg overflow-hidden">
-            <div className="bg-secondary/5 border-b border-border px-4 py-3">
-              <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold">Prev Moves</h2>
-              </div>
-            </div>
-            <div className="p-4 space-y-4">
-              <div className="space-y-2">
-                {prevMoves.map((move, index) => (
-                  <div 
-                    key={index} 
-                    className="flex items-center justify-between p-2 hover:bg-secondary/20 rounded cursor-pointer"
-                    onClick={() => onDrop(move.from, move.to)}
-                  >
-                    <div className="grid grid-cols-2 gap-2">
-                      <span className="font-mono">{move.san}</span>
-                      <span className="text-sm text-muted-foreground">{move.name}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-                  </div>
+        </div>
       </div>
     </div>
   )
