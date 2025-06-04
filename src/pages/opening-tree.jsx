@@ -2,7 +2,7 @@ import {Chess} from 'chess.js'
 import {Chessboard} from 'react-chessboard'
 import {useState, useRef, useEffect, useCallback} from 'react'
 import {ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight} from 'lucide-react'
-import {getNextPositions} from '@/api/positions'
+import {getNextPositions, commentPosition} from '@/api/positions'
 
 function getSanMoveFromFens(fromFen, toFen) {
   const chess = new Chess(fromFen);
@@ -24,21 +24,70 @@ export function OpeningTree({openingId, repertoireId, side}) {
   const [currentMove, setCurrentMove] = useState(-1)
   const [nextMoves, setNextMoves] = useState([])
   const [arrows, setArrows] = useState([])
+  const [moveEvaluations, setMoveEvaluations] = useState({})
+  const [openDropdownMoveId, setOpenDropdownMoveId] = useState(null)
+  const [moveComments, setMoveComments] = useState({})
+  const [editingCommentMoveId, setEditingCommentMoveId] = useState(null)
 
-  const setNextMovesAndArrows = useCallback((nextMoves) => {
-    nextMoves = nextMoves.map(nm => ({...nm, last_move: getSanMoveFromFens(position, nm.fen)}))
-    console.log('nextMoves', nextMoves)
-    setNextMoves(nextMoves)
-    const newArrows = []
-    const legalMoves = game.moves({verbose: true})
+  const processAndSetNextMoves = useCallback((apiNextMoves) => {
+    const processedMoves = apiNextMoves.map(nm => ({
+      ...nm,
+      last_move: getSanMoveFromFens(position, nm.fen),
+    }));
+    setNextMoves(processedMoves);
+    setMoveEvaluations(prev => ({
+      ...prev,
+      ...processedMoves.reduce((acc, nm) => {
+        acc[nm.ID] = nm.eval;
+        return acc;
+      }, {})
+    }));
+    setMoveComments(prev => ({
+      ...prev,
+      ...processedMoves.reduce((acc, nm) => {
+        acc[nm.ID] = nm.comment;
+        return acc;
+      }, {})
+    }));
+  }, [position]);
+
+  const updateArrows = useCallback(() => {
+    if (!game || !nextMoves || nextMoves.length === 0) {
+      setArrows([]);
+      return;
+    }
+
+    const newArrows = [];
+    const legalMoves = game.moves({ verbose: true });
+
     for (const nm of nextMoves) {
-      const lastMove = legalMoves.find(m => m.san === nm.last_move)
+      const lastMove = legalMoves.find(m => m.san === nm.last_move);
       if (lastMove) {
-        newArrows.push([lastMove.from, lastMove.to, `hsla(230, 100%, ${50 + (nextMoves.indexOf(nm) * 10)}%, ${1 - (nextMoves.indexOf(nm) * 0.1)})`])
+        const moveId = nm.ID;
+        const evaluation = moveEvaluations[moveId] || '=';
+        const index = nextMoves.indexOf(nm);
+        
+        const lightness = Math.min(85, 50 + index * 10); 
+        const alpha = Math.max(0.4, 1 - index * 0.15);
+        let hue;
+
+        if (evaluation === '+' || evaluation === '+=') {
+          hue = 120; // Green
+        } else if (evaluation === '-' || evaluation === '-=') {
+          hue = 0;   // Red
+        } else { // evaluation === '=' or other
+          hue = 230; // Blue
+        }
+        const arrowColor = `hsla(${hue}, 75%, ${lightness}%, ${alpha})`;
+        newArrows.push([lastMove.from, lastMove.to, arrowColor]);
       }
     }
-    setArrows(newArrows)
-  }, [position, game])
+    setArrows(newArrows);
+  }, [nextMoves, moveEvaluations, game]);
+
+  useEffect(() => {
+    updateArrows();
+  }, [updateArrows]);
 
   const handleNewMove = (newFen) => {
     prevPosition.current = position
@@ -47,23 +96,59 @@ export function OpeningTree({openingId, repertoireId, side}) {
 
   const fetchPositions = useCallback(async (fromFen, fen) => {
     try {
-      const {data} = await getNextPositions(fromFen, fen, repertoireId)
+      const {data} = await getNextPositions(fromFen, fen, repertoireId, openingId)
 
       if (data.message) {
+        setNextMoves([]); // Clear next moves
         return
       }
       if (data.length >= 0) {
-        setNextMovesAndArrows(data)
+        processAndSetNextMoves(data) // Use the new function for processing moves
       }
     } catch (error) {
       console.error('Error fetching positions:', error)
+      setNextMoves([]); // Clear next moves on error
     }
-  }, [repertoireId, setNextMovesAndArrows])
+  }, [repertoireId, processAndSetNextMoves]) // Updated dependencies
 
   useEffect(() => {
     fetchPositions(prevPosition.current, position)
   }, [position])
 
+  const handleEvaluationChange = (moveId, evaluation) => {
+    setMoveEvaluations(prev => ({
+      ...prev,
+      [moveId]: evaluation
+    }))
+    setOpenDropdownMoveId(null) // Close dropdown after selection
+    commentPosition(moveId, evaluation, '')
+  }
+
+  const toggleDropdown = (moveId) => {
+    setOpenDropdownMoveId(prev => (prev === moveId ? null : moveId))
+  }
+
+  const handleCommentChange = (moveId, comment) => {
+    setMoveComments(prev => ({
+      ...prev,
+      [moveId]: comment
+    }))
+  }
+
+  const toggleCommentEdit = (moveId) => {
+    if(moveId === editingCommentMoveId){
+      commentPosition(moveId, '', moveComments[moveId])
+    }
+    setEditingCommentMoveId(prev => (prev === moveId ? null : moveId))
+  }
+
+  const evaluationOptions = [
+    { value: '=', label: '=' },
+    { value: '+=', label: '+=' },
+    { value: '-=', label: '-=' },
+    { value: '+', label: '+' },
+    { value: '-', label: '-' }
+  ]
 
   const goToMove = (moveIndex) => {
     const newGame = new Chess()
@@ -248,7 +333,7 @@ export function OpeningTree({openingId, repertoireId, side}) {
           </div>
 
           {/* Next Moves  */}
-          <div className="border border-border rounded-lg overflow-hidden">
+          <div className="border border-border rounded-lg">
             <div className="bg-secondary/5 border-b border-border px-4 py-3">
               <div className="flex justify-between items-center">
                 <h2 className="text-lg font-semibold">Next Moves</h2>
@@ -256,7 +341,14 @@ export function OpeningTree({openingId, repertoireId, side}) {
             </div>
             <div className="p-4 space-y-4">
               <div className="space-y-2">
-                {nextMoves?.map((move, index) => (
+                {nextMoves?.map((move, index) => {
+                  const moveId = move.ID
+                  const currentEvaluation = moveEvaluations[moveId] || '=';
+                  const isDropdownOpen = openDropdownMoveId === moveId;
+                  const currentComment = moveComments[moveId] || 'comment here';
+                  const isEditingComment = editingCommentMoveId === moveId;
+                  
+                  return (
                   <div
                     key={index}
                     className="flex items-center justify-between p-2 hover:bg-secondary/50 rounded"
@@ -265,11 +357,56 @@ export function OpeningTree({openingId, repertoireId, side}) {
                       <span className="font-mono col-span-1 cursor-pointer"
                         onClick={() => onDrop(move.last_move)}
                       >{move.last_move}</span>
-                      <span className="col-span-1 text-sm text-muted-foreground">=</span>
-                      <span className="col-span-4 text-sm text-muted-foreground">comment here</span>
+                      <div className="col-span-1 relative">
+                        <div className="text-sm cursor-pointer relative">
+                          <span 
+                            className="hover:bg-secondary/30 px-1 py-0.5 rounded"
+                            onClick={() => toggleDropdown(moveId)}
+                          >
+                            {currentEvaluation}
+                          </span>
+                          {isDropdownOpen && (
+                            <div className="absolute left-0 top-full mt-1 bg-background border border-border rounded shadow-lg z-10">
+                              <div className="p-1">
+                                {evaluationOptions.map(option => (
+                                  <div 
+                                    key={option.value} 
+                                    className="px-3 py-1 hover:bg-secondary/30 cursor-pointer"
+                                    onClick={() => handleEvaluationChange(moveId, option.value)}
+                                  >
+                                    {option.label}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      {isEditingComment ? (
+                        <input 
+                          type="text"
+                          value={currentComment === 'comment here' ? '' : currentComment}
+                          onChange={(e) => handleCommentChange(moveId, e.target.value)}
+                          onBlur={() => toggleCommentEdit(moveId)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              toggleCommentEdit(moveId);
+                            }
+                          }}
+                          className="col-span-4 text-sm bg-transparent border-b border-border focus:outline-none"
+                          autoFocus
+                        />
+                      ) : (
+                        <span 
+                          className="col-span-4 text-sm text-muted-foreground cursor-pointer hover:bg-secondary/30 px-1 py-0.5 rounded"
+                          onClick={() => toggleCommentEdit(moveId)}
+                        >
+                          {currentComment}
+                        </span>
+                      )}
                     </div>
                   </div>
-                ))}
+                )})}
               </div>
             </div>
           </div>
