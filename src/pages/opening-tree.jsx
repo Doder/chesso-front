@@ -341,7 +341,14 @@ export function OpeningTree({openingId, openingName, repertoireId, side}) {
             </div>
             <div className="p-4 space-y-4">
               <div className="space-y-2">
-                {nextMoves?.map((move, index) => {
+                {nextMoves?.sort((a, b) => {
+                  if (a.opening_name === openingName) {
+                    return -1
+                  } else if (b.opening_name === openingName) {
+                    return 1
+                  }
+                  return a < b
+                }).map((move, index) => {
                   const moveId = move.ID
                   const currentEvaluation = moveEvaluations[moveId] || '=';
                   const isDropdownOpen = openDropdownMoveId === moveId;
