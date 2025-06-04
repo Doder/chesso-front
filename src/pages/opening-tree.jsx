@@ -16,7 +16,7 @@ function getSanMoveFromFens(fromFen, toFen) {
   return null;
 }
 
-export function OpeningTree({openingId, repertoireId, side}) {
+export function OpeningTree({openingId, openingName, repertoireId, side}) {
   const [game, setGame] = useState(() => new Chess())
   const [position, setPosition] = useState(game.fen())
   const prevPosition = useRef(null)
@@ -58,7 +58,7 @@ export function OpeningTree({openingId, repertoireId, side}) {
     }
 
     const newArrows = [];
-    const legalMoves = game.moves({ verbose: true });
+    const legalMoves = game.moves({verbose: true});
 
     for (const nm of nextMoves) {
       const lastMove = legalMoves.find(m => m.san === nm.last_move);
@@ -66,8 +66,8 @@ export function OpeningTree({openingId, repertoireId, side}) {
         const moveId = nm.ID;
         const evaluation = moveEvaluations[moveId] || '=';
         const index = nextMoves.indexOf(nm);
-        
-        const lightness = Math.min(85, 50 + index * 10); 
+
+        const lightness = Math.min(85, 50 + index * 10);
         const alpha = Math.max(0.4, 1 - index * 0.15);
         let hue;
 
@@ -136,18 +136,18 @@ export function OpeningTree({openingId, repertoireId, side}) {
   }
 
   const toggleCommentEdit = (moveId) => {
-    if(moveId === editingCommentMoveId){
+    if (moveId === editingCommentMoveId) {
       commentPosition(moveId, '', moveComments[moveId])
     }
     setEditingCommentMoveId(prev => (prev === moveId ? null : moveId))
   }
 
   const evaluationOptions = [
-    { value: '=', label: '=' },
-    { value: '+=', label: '+=' },
-    { value: '-=', label: '-=' },
-    { value: '+', label: '+' },
-    { value: '-', label: '-' }
+    {value: '=', label: '='},
+    {value: '+=', label: '+='},
+    {value: '-=', label: '-='},
+    {value: '+', label: '+'},
+    {value: '-', label: '-'}
   ]
 
   const goToMove = (moveIndex) => {
@@ -345,68 +345,70 @@ export function OpeningTree({openingId, repertoireId, side}) {
                   const moveId = move.ID
                   const currentEvaluation = moveEvaluations[moveId] || '=';
                   const isDropdownOpen = openDropdownMoveId === moveId;
-                  const currentComment = moveComments[moveId] || 'comment here';
+                  const currentComment = moveComments[moveId] || '';
                   const isEditingComment = editingCommentMoveId === moveId;
-                  
+
                   return (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-2 hover:bg-secondary/50 rounded"
-                  >
-                    <div className="w-full grid grid-cols-6 gap-2">
-                      <span className="font-mono col-span-1 cursor-pointer"
-                        onClick={() => onDrop(move.last_move)}
-                      >{move.last_move}</span>
-                      <div className="col-span-1 relative">
-                        <div className="text-sm cursor-pointer relative">
-                          <span 
-                            className="hover:bg-secondary/30 px-1 py-0.5 rounded"
-                            onClick={() => toggleDropdown(moveId)}
-                          >
-                            {currentEvaluation}
-                          </span>
-                          {isDropdownOpen && (
-                            <div className="absolute left-0 top-full mt-1 bg-background border border-border rounded shadow-lg z-10">
-                              <div className="p-1">
-                                {evaluationOptions.map(option => (
-                                  <div 
-                                    key={option.value} 
-                                    className="px-3 py-1 hover:bg-secondary/30 cursor-pointer"
-                                    onClick={() => handleEvaluationChange(moveId, option.value)}
-                                  >
-                                    {option.label}
-                                  </div>
-                                ))}
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-2 hover:bg-secondary/50 rounded"
+                    >
+                      <div className="w-full grid grid-cols-6 gap-2">
+                        <span className="font-mono col-span-1 cursor-pointer"
+                          onClick={() => onDrop(move.last_move)}
+                        >{move.last_move}</span>
+                        <div className="col-span-1 relative">
+                          <div className="text-sm cursor-pointer relative">
+                            <span
+                              className="hover:bg-secondary/30 px-1 py-0.5 rounded"
+                              onClick={() => toggleDropdown(moveId)}
+                            >
+                              {currentEvaluation}
+                            </span>
+                            {isDropdownOpen && (
+                              <div className="absolute left-0 top-full mt-1 bg-background border border-border rounded shadow-lg z-10">
+                                <div className="p-1">
+                                  {evaluationOptions.map(option => (
+                                    <div
+                                      key={option.value}
+                                      className="px-3 py-1 hover:bg-secondary/30 cursor-pointer"
+                                      onClick={() => handleEvaluationChange(moveId, option.value)}
+                                    >
+                                      {option.label}
+                                    </div>
+                                  ))}
+                                </div>
                               </div>
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </div>
+                        {isEditingComment ? (
+                          <input
+                            type="text"
+                            value={currentComment}
+                            onChange={(e) => handleCommentChange(moveId, e.target.value)}
+                            onBlur={() => toggleCommentEdit(moveId)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                toggleCommentEdit(moveId);
+                              }
+                            }}
+                            className="col-span-3 text-sm bg-transparent border-b border-border focus:outline-none"
+                            placeholder="Add comment..."
+                          />
+                        ) : (
+                          <span
+                            className="col-span-3 text-sm text-muted-foreground cursor-pointer hover:bg-secondary/30 px-1 py-0.5 rounded"
+                            onClick={() => toggleCommentEdit(moveId)}
+                          >
+                            {currentComment || 'Add comment...'}
+                          </span>
+                        )}
+                        <span className="col-span-1 text-xs text-muted-foreground">{move.opening_name}</span>
                       </div>
-                      {isEditingComment ? (
-                        <input 
-                          type="text"
-                          value={currentComment === 'comment here' ? '' : currentComment}
-                          onChange={(e) => handleCommentChange(moveId, e.target.value)}
-                          onBlur={() => toggleCommentEdit(moveId)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              toggleCommentEdit(moveId);
-                            }
-                          }}
-                          className="col-span-4 text-sm bg-transparent border-b border-border focus:outline-none"
-                          autoFocus
-                        />
-                      ) : (
-                        <span 
-                          className="col-span-4 text-sm text-muted-foreground cursor-pointer hover:bg-secondary/30 px-1 py-0.5 rounded"
-                          onClick={() => toggleCommentEdit(moveId)}
-                        >
-                          {currentComment}
-                        </span>
-                      )}
                     </div>
-                  </div>
-                )})}
+                  )
+                })}
               </div>
             </div>
           </div>
