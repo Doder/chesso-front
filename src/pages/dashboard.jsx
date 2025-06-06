@@ -1,5 +1,5 @@
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import {Card, CardHeader, CardTitle, CardContent} from '@/components/ui/card'
+import {Button} from '@/components/ui/button'
 
 export default function DashboardPage() {
   return (
@@ -120,9 +120,9 @@ export default function DashboardPage() {
           <CardContent>
             <div className="space-y-8">
               {[
-                { opponent: 'Player1', result: 'Won', date: '2024-05-10', moves: 32 },
-                { opponent: 'Player2', result: 'Lost', date: '2024-05-09', moves: 45 },
-                { opponent: 'Player3', result: 'Won', date: '2024-05-08', moves: 28 },
+                {opponent: 'Player1', result: 'Won', date: '2024-05-10', moves: 32},
+                {opponent: 'Player2', result: 'Lost', date: '2024-05-09', moves: 45},
+                {opponent: 'Player3', result: 'Won', date: '2024-05-08', moves: 28},
               ].map((game, i) => (
                 <div key={i} className="flex items-center">
                   <div className="ml-4 space-y-1">
@@ -165,6 +165,18 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+      <a
+        href="https://www.buymeacoffee.com/doder"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block !mt-4"
+      >
+        <img
+          src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
+          alt="Buy Me A Coffee"
+          style={{height: '45px', width: '162px'}}
+        />
+      </a>
     </div>
   )
 }
