@@ -347,7 +347,7 @@ export function OpeningTree({openingId, openingName, repertoireId, side}) {
                   } else if (b.opening_name === openingName) {
                     return 1
                   }
-                  return a < b
+                  return 0
                 }).map((move, index) => {
                   const moveId = move.ID
                   const currentEvaluation = moveEvaluations[moveId] || '=';
