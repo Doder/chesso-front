@@ -32,7 +32,7 @@ export function Opening() {
       <div className="container pb-2">
         <Breadcrumb items={breadcrumbItems} />
       </div>
-      <OpeningTree openingId={oid} openingName={opening?.name} repertoireId={rid} side={opening?.side} />
+      {opening && <OpeningTree openingId={oid} openingName={opening.name} repertoireId={rid} side={opening.side} /> }
     </div>
   )
 }
