@@ -348,7 +348,7 @@ export function OpeningTree({openingId, openingName, repertoireId, side}) {
                     return 1
                   }
                   return 0
-                }).map((move, index) => {
+                }).map((move) => {
                   const moveId = move.ID
                   const currentEvaluation = moveEvaluations[moveId] || '=';
                   const isDropdownOpen = openDropdownMoveId === moveId;
@@ -357,7 +357,7 @@ export function OpeningTree({openingId, openingName, repertoireId, side}) {
 
                   return (
                     <div
-                      key={index}
+                      key={moveId}
                       className="flex items-center justify-between p-2 hover:bg-secondary/50 rounded"
                     >
                       <div className="w-full grid grid-cols-6 gap-2">
