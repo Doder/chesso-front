@@ -342,9 +342,9 @@ export function OpeningTree({openingId, openingName, repertoireId, side}) {
             <div className="p-4 space-y-4">
               <div className="space-y-2">
                 {nextMoves?.sort((a, b) => {
-                  if (a.opening_name === openingName) {
+                  if (a.opening_name === openingName && b.opening_name !== openingName) {
                     return -1
-                  } else if (b.opening_name === openingName) {
+                  } else if (b.opening_name === openingName && a.opening_name !== openingName) {
                     return 1
                   }
                   return 0
