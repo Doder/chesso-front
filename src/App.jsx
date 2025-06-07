@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useEffect, useState } from 'react'
 import Layout from './components/layout'
 import LoginPage from './pages/login'
+import RegisterPage from './pages/register'
 import DashboardPage from './pages/dashboard'
 import GamesPage from './pages/games'
 import { Repertoires } from './pages/repertoires'
@@ -24,6 +25,10 @@ function App() {
     setIsAuthenticated(true)
   }
 
+  const handleRegisterSuccess = () => {
+    setIsAuthenticated(true)
+  }
+
   if (isLoading) {
     return null
   }
@@ -35,6 +40,11 @@ function App() {
           isAuthenticated ? 
           <Navigate to="/" /> : 
           <LoginPage onLogin={handleLogin} />
+        } />
+        <Route path="/register" element={
+          isAuthenticated ? 
+          <Navigate to="/" /> :
+          <RegisterPage onRegister={handleRegisterSuccess} />
         } />
         <Route path="/" element={
           isAuthenticated ? 

@@ -10,6 +10,20 @@ export const login = async (email, password) => {
   return response.data
 }
 
+export const register = async (username, email, password, rating) => {
+  const payload = { username, email, password };
+  if (rating) {
+    payload.rating = parseInt(rating, 10);
+  }
+  const response = await api.post('/register', payload);
+  
+  const { token } = response.data;
+  if (token) {
+    setToken(token);
+  }
+  return response.data;
+};
+
 export const logout = () => {
   removeToken()
   window.location.href = '/login'
