@@ -400,6 +400,7 @@ export function OpeningTree({openingId, openingName, repertoireId, side}) {
                                 toggleCommentEdit(moveId);
                               }
                             }}
+                            autoFocus
                             className="col-span-3 text-sm bg-transparent border-b border-border focus:outline-none"
                             placeholder="Add comment..."
                           />
