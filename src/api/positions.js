@@ -23,6 +23,6 @@ export const createPosition = (from_fen, to_fen, last_move, opening_id, repertoi
   return api.post('/positions/', { from_fen, to_fen, last_move, opening_id, repertoire_id })
 }
 
-export const commentPosition = (id, evaluation, comment) => {
-  return api.patch('/positions/' + id, { eval: evaluation, comment })
+export const commentPosition = (id, evaluation, comment, order) => {
+  return api.patch('/positions/' + id, { eval: evaluation, comment, order })
 }

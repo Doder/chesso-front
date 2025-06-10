@@ -1,7 +1,9 @@
+import classNames from 'classnames'
 import {Chess} from 'chess.js'
 import {Chessboard} from 'react-chessboard'
 import {useState, useRef, useEffect, useCallback} from 'react'
-import {ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight} from 'lucide-react'
+import {ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, SquareChevronUp} from 'lucide-react'
+import { motion } from 'framer-motion'
 import {getNextPositions, commentPosition} from '@/api/positions'
 
 function getSanMoveFromFens(fromFen, toFen) {
@@ -34,7 +36,20 @@ export function OpeningTree({openingId, openingName, repertoireId, side}) {
       ...nm,
       last_move: getSanMoveFromFens(position, nm.fen),
     }));
-    setNextMoves(processedMoves);
+    setNextMoves(processedMoves?.sort((a, b) => {
+      if (a.opening_name === openingName && b.opening_name !== openingName) {
+        return -1
+      } else if (b.opening_name === openingName && a.opening_name !== openingName) {
+        return 1
+      } else if(a.opening_name !== openingName && b.opening_name !== openingName) {
+        return a.opening_name.localeCompare(b.opening_name)
+      }else if (a.order === 0 && b.order !== 0) {
+        return 1
+      } else if (b.order === 0 && a.order !== 0) {
+        return -1
+      } 
+      return a.order - b.order
+    }));
     setMoveEvaluations(prev => ({
       ...prev,
       ...processedMoves.reduce((acc, nm) => {
@@ -67,8 +82,7 @@ export function OpeningTree({openingId, openingName, repertoireId, side}) {
         const evaluation = moveEvaluations[moveId] || '=';
         const index = nextMoves.indexOf(nm);
 
-        const lightness = Math.min(85, 50 + index * 10);
-        const alpha = Math.max(0.4, 1 - index * 0.15);
+        const lightness = Math.min(80, 50 + index * 10);
         let hue;
 
         if (evaluation === '+' || evaluation === '+=') {
@@ -78,7 +92,7 @@ export function OpeningTree({openingId, openingName, repertoireId, side}) {
         } else { // evaluation === '=' or other
           hue = 230; // Blue
         }
-        const arrowColor = `hsla(${hue}, 75%, ${lightness}%, ${alpha})`;
+        const arrowColor = `hsla(${hue}, 75%, ${lightness}%, 1)`;
         newArrows.push([lastMove.from, lastMove.to, arrowColor]);
       }
     }
@@ -154,7 +168,7 @@ export function OpeningTree({openingId, openingName, repertoireId, side}) {
     const newGame = new Chess()
     prevPosition.current = null
     for (let i = 0; i <= moveIndex && i < history.length; i++) {
-      newGame.move(history[i])
+        newGame.move(history[i])
       if (i === moveIndex - 1) {
         prevPosition.current = newGame.fen()
       }
@@ -224,6 +238,30 @@ export function OpeningTree({openingId, openingName, repertoireId, side}) {
     } catch {
       return false
     }
+  }
+
+  useEffect(() => {
+    nextMoves.forEach((move, index) => {
+      if(move.opening_name === openingName && (!move.order || move.order === 0 || move.order !== index + 1)) {
+        commentPosition(move.ID, '', '', index + 1).catch(e => {
+          console.error(e)
+        })
+      }
+    })
+  }, [nextMoves, openingName])
+
+  const handleMoveUp = (moveId) => {
+    setNextMoves(prev => {
+      const newNextMoves = [...prev]
+      const moveIndex = prev.findIndex((nm) => nm.ID === moveId)
+      const move = prev[moveIndex]
+      newNextMoves.splice(moveIndex, 1)
+      newNextMoves.splice(moveIndex - 1, 0, move)
+      if (moveIndex === -1 || moveIndex === 0) {
+        return prev;
+      }
+      return newNextMoves
+    })
   }
 
   return (
@@ -339,26 +377,24 @@ export function OpeningTree({openingId, openingName, repertoireId, side}) {
                 <h2 className="text-lg font-semibold">Next Moves</h2>
               </div>
             </div>
-            <div className="p-4 space-y-4">
-              <div className="space-y-2">
-                {nextMoves?.sort((a, b) => {
-                  if (a.opening_name === openingName && b.opening_name !== openingName) {
-                    return -1
-                  } else if (b.opening_name === openingName && a.opening_name !== openingName) {
-                    return 1
-                  }
-                  return 0
-                }).map((move) => {
+            <div >
+              <div >
+                {nextMoves.map((move, index, arr) => {
                   const moveId = move.ID
                   const currentEvaluation = moveEvaluations[moveId] || '=';
                   const isDropdownOpen = openDropdownMoveId === moveId;
                   const currentComment = moveComments[moveId] || '';
                   const isEditingComment = editingCommentMoveId === moveId;
-
+                  const isSecondaryOpening = move.opening_name !== openingName;
                   return (
-                    <div
+                    <motion.div
+                      layout
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
                       key={moveId}
-                      className="flex items-center justify-between p-2 hover:bg-secondary/50 rounded"
+                      className={classNames(
+                        "flex items-center justify-between py-2 px-4 hover:bg-secondary/50",
+                        isSecondaryOpening && arr[index - 1] && move.opening_name !== arr[index - 1].opening_name && "border-t"
+                      )}
                     >
                       <div className="w-full grid grid-cols-6 gap-2">
                         <span className="font-mono col-span-1 cursor-pointer"
@@ -406,15 +442,21 @@ export function OpeningTree({openingId, openingName, repertoireId, side}) {
                           />
                         ) : (
                           <span
-                            className="col-span-3 text-sm text-muted-foreground cursor-pointer hover:bg-secondary/30 px-1 py-0.5 rounded"
+                            className={
+                              classNames(
+                                "text-sm text-muted-foreground cursor-pointer hover:bg-secondary/30 px-1 py-0.5 rounded",
+                                isSecondaryOpening ? "col-span-3" : "col-span-3"
+                              )
+                            }
                             onClick={() => toggleCommentEdit(moveId)}
                           >
                             {currentComment || 'Add comment...'}
                           </span>
                         )}
-                        <span className="col-span-1 text-xs text-muted-foreground">{move.opening_name}</span>
+                        {isSecondaryOpening ? <span className="col-span-1 text-xs text-muted-foreground bg-black/80 px-1 py-0.5 rounded text-white text-center leading-[2]">{move.opening_name}</span> : 
+                        index > 0 && <span title="Promote move"><SquareChevronUp className="w-6 h-6 cursor-pointer ml-auto text-primary" onClick={() => handleMoveUp(moveId)} /></span>}
                       </div>
-                    </div>
+                    </motion.div>
                   )
                 })}
               </div>
