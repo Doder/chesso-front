@@ -29,7 +29,7 @@ export function Opening() {
 
   return (
     <div className="">
-      <div className="container pb-2">
+      <div className="lg:container pt-2">
         <Breadcrumb items={breadcrumbItems} />
       </div>
       {opening && <OpeningTree openingId={oid} openingName={opening.name} repertoireId={rid} side={opening.side} /> }

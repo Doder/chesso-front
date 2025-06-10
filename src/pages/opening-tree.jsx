@@ -227,9 +227,9 @@ export function OpeningTree({openingId, openingName, repertoireId, side}) {
   }
 
   return (
-    <div className="container">
-      <div className="flex gap-6">
-        <div className="flex-[2]">
+    <div className="lg:container">
+      <div className="lg:flex gap-6">
+        <div className="flex-1 mb-4">
           <Chessboard
             position={position}
             onPieceDrop={onDrop}

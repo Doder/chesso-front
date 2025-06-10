@@ -19,13 +19,22 @@ export default function Layout() {
             <nav>
               <ul className="flex space-x-4">
                 <li>
-                  <Link to="/">
-                    <Button variant="ghost">Dashboard</Button>
-                  </Link>
+                  <a
+                    href="https://www.buymeacoffee.com/doder"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block"
+                  >
+                    <img
+                      src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
+                      alt="Buy Me A Coffee"
+                      style={{height: '35px', width: '132px'}}
+                    />
+                  </a>
                 </li>
-                <li><Button variant="ghost">Profile</Button></li>
-                <li><Button variant="ghost">Settings</Button></li>
-                <li>
+                {/* <li><Button variant="ghost">Profile</Button></li> */}
+                {/* <li><Button variant="ghost">Settings</Button></li> */}
+                <li className="hidden lg:block">
                   <Link to="/repertoires">
                     <Button variant="ghost">Repertoires</Button>
                   </Link>
@@ -38,7 +47,7 @@ export default function Layout() {
           </div>
         </div>
       </header>
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto">
         <Outlet />
       </main>
     </div>
