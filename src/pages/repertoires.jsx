@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, PenIcon } from 'lucide-react'
 import { DateTime } from 'luxon'
-import { getRepertoires, createRepertoire, deleteRepertoire } from '@/api/repertoire'
+import { getRepertoires, createRepertoire, deleteRepertoire, updateRepertoire } from '@/api/repertoire'
 import { RepertoireModal } from '../components/repertoire-modal'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -18,6 +18,7 @@ export function Repertoires() {
   const [repertoires, setRepertoires] = useState([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null })
+  const [editingRepertoire, setEditingRepertoire] = useState(null)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -40,6 +41,21 @@ export function Repertoires() {
     } catch (error) {
       console.error('Error creating repertoire:', error)
     }
+  }
+
+  const handleEditRepertoire = async (data) => {
+    try {
+      await updateRepertoire(data, editingRepertoire.ID)
+      fetchRepertoires()
+    } catch (error) {
+      console.error('Error editing repertoire:', error)
+    }
+  }
+
+  const handleEditClick = (e, id) => {
+    e.stopPropagation()
+    setIsModalOpen(true)
+    setEditingRepertoire(repertoires.find(r => r.ID === id))
   }
 
   const handleDeleteClick = (e, id) => {
@@ -105,6 +121,12 @@ export function Repertoires() {
                 </td>
                 <td className="px-4 py-3 text-right">
                   <button
+                    onClick={(e) => handleEditClick(e, repertoire.ID)}
+                    className="p-2 text-gray-500 hover:text-gray-600 hover:bg-gray-50 rounded"
+                  >
+                    <PenIcon className="w-4 h-4" />
+                  </button>
+                  <button
                     onClick={(e) => handleDeleteClick(e, repertoire.ID)}
                     className="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded"
                   >
@@ -126,7 +148,9 @@ export function Repertoires() {
       <RepertoireModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSubmit={handleCreateRepertoire}
+        onSubmit={editingRepertoire ? handleEditRepertoire : handleCreateRepertoire}
+        editingRepertoire={editingRepertoire}
+        key={editingRepertoire?.ID || 'new'}
       />
 
       <Dialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ open, id: open ? deleteDialog.id : null })}>

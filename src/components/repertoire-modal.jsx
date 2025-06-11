@@ -13,17 +13,13 @@ import {
 
 const formSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  side: z.enum(['w', 'b'], {
-    required_error: 'Please select a side',
-  }),
 })
 
-export function RepertoireModal({ isOpen, onClose, onSubmit }) {
+export function RepertoireModal({ isOpen, onClose, onSubmit, editingRepertoire }) {
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: '',
-      side: 'w',
+      name: editingRepertoire?.name || '',
     },
   })
 
@@ -38,7 +34,7 @@ export function RepertoireModal({ isOpen, onClose, onSubmit }) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
       <div className="bg-background p-6 rounded-lg w-[400px]">
-        <h2 className="text-lg font-semibold mb-4">Create New Repertoire</h2>
+        <h2 className="text-lg font-semibold mb-4">{editingRepertoire ? 'Edit Repertoire' : 'Create New Repertoire'}</h2>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             <FormField
@@ -70,7 +66,7 @@ export function RepertoireModal({ isOpen, onClose, onSubmit }) {
                 type="submit"
                 className="px-4 py-2 bg-primary text-primary-foreground rounded"
               >
-                Create
+                {editingRepertoire ? 'Save' : 'Create'}
               </button>
             </div>
           </form>
