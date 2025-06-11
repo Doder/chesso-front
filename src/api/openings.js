@@ -12,6 +12,10 @@ export const createOpening = (data, repertoireId) => {
   return api.post('/openings/', {...data, repertoire_id: repertoireId})
 }
 
+export const updateOpening = (data, openingId) => {
+  return api.patch(`/openings/${openingId}`, data)
+}
+
 export const deleteOpening = (id) => {
   return api.delete(`/openings/${id}`)
 }

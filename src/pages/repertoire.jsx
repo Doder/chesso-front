@@ -21,7 +21,7 @@ export function Repertoire() {
   }, [id])
 
   return (
-    <div className="">
+    <div className="mt-4">
       <div className="container mb-2">
         <h2 className="text-xl font-semibold">
           {repertoire?.name || 'Loading...'}

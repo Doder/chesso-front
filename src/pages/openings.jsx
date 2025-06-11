@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Plus, Trash2 } from 'lucide-react'
+import { PenIcon, Plus, Trash2 } from 'lucide-react'
 import { DateTime } from 'luxon'
-import { getOpenings, createOpening, deleteOpening } from '@/api/openings'
+import { getOpenings, createOpening, deleteOpening, updateOpening } from '@/api/openings'
 import { OpeningModal } from '../components/opening-modal'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
@@ -19,6 +19,7 @@ export function Openings() {
   const [openings, setOpenings] = useState([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null })
+  const [editingOpening, setEditingOpening] = useState(null)
   const navigate = useNavigate()
   const { id: repertoireId } = useParams()
 
@@ -44,9 +45,24 @@ export function Openings() {
     }
   }
 
+  const handleUpdateOpening = async (data) => {
+    try {
+      await updateOpening(data, Number(editingOpening.ID))
+      fetchOpenings()
+    } catch (error) {
+      console.error('Error updating opening:', error)
+    }
+  }
+
   const handleDeleteClick = (e, id) => {
     e.stopPropagation()
     setDeleteDialog({ open: true, id })
+  }
+
+  const handleEditClick = (e, id) => {
+    e.stopPropagation()
+    setIsModalOpen(true)
+    setEditingOpening(openings.find(o => o.ID === id))
   }
 
   const handleDelete = async () => {
@@ -115,6 +131,12 @@ export function Openings() {
                 </td>
                 <td className="px-4 py-3 text-right">
                   <button
+                    onClick={(e) => handleEditClick(e, opening.ID)}
+                    className="p-2 text-gray-500 hover:text-gray-600 hover:bg-gray-50 rounded"
+                  >
+                    <PenIcon className="w-4 h-4" />
+                  </button>
+                  <button
                     onClick={(e) => handleDeleteClick(e, opening.ID)}
                     className="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded"
                   >
@@ -136,7 +158,9 @@ export function Openings() {
       <OpeningModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSubmit={handleCreateOpening}
+        onSubmit={editingOpening ? handleUpdateOpening : handleCreateOpening}
+        editingOpening={editingOpening}
+        key={editingOpening?.ID || 'new'}
       />
 
       <Dialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ open, id: open ? deleteDialog.id : null })}>

@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import z from 'zod'
@@ -24,12 +25,12 @@ const formSchema = z.object({
   }),
 })
 
-export function OpeningModal({ isOpen, onClose, onSubmit }) {
+export function OpeningModal({ isOpen, onClose, onSubmit, editingOpening}) {
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: '',
-      side: 'w',
+      name: editingOpening?.name || '',
+      side: editingOpening?.side || 'w',
     },
   })
 
@@ -44,7 +45,7 @@ export function OpeningModal({ isOpen, onClose, onSubmit }) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
       <div className="bg-background p-6 rounded-lg w-[400px]">
-        <h2 className="text-lg font-semibold mb-4">Create New Opening</h2>
+        <h2 className="text-lg font-semibold mb-4">{editingOpening ? 'Edit Opening' : 'Create New Opening'}</h2>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             <FormField
@@ -97,7 +98,7 @@ export function OpeningModal({ isOpen, onClose, onSubmit }) {
                 type="submit"
                 className="px-4 py-2 bg-primary text-primary-foreground rounded"
               >
-                Create
+                {editingOpening ? 'Save' : 'Create'}
               </button>
             </div>
           </form>
