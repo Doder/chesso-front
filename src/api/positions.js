@@ -26,3 +26,7 @@ export const createPosition = (from_fen, to_fen, last_move, opening_id, repertoi
 export const commentPosition = (id, evaluation, comment, order) => {
   return api.patch('/positions/' + id, { eval: evaluation, comment, order })
 }
+
+export const deleteMove = (id) => {
+  return api.delete('/positions/' + id)
+}
