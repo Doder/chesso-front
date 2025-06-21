@@ -51,8 +51,6 @@ export function OpeningTree({ openingId, openingName, repertoireId, side }) {
   const [positionComment, setPositionComment] = useState("");
   const [currentPositionId, setCurrentPositionId] = useState(null);
 
-  console.log('h', history);
-
   const processAndSetNextMoves = useCallback(
     (apiNextMoves) => {
       const processedMoves = apiNextMoves.map((nm) => ({
@@ -154,13 +152,17 @@ export function OpeningTree({ openingId, openingName, repertoireId, side }) {
           repertoireId,
           openingId
         );
+        if (data.current_position) {
+          setCurrentPositionId(data.current_position.ID);
+          setPositionComment(data.current_position.comment);
+        }
 
         if (data.message) {
           setNextMoves([]); // Clear next moves
           return;
         }
-        if (data.length >= 0) {
-          processAndSetNextMoves(data); // Use the new function for processing moves
+        if (data.positions.length >= 0) {
+          processAndSetNextMoves(data.positions); // Use the new function for processing moves
         }
       } catch (error) {
         console.error("Error fetching positions:", error);
@@ -595,13 +597,8 @@ export function OpeningTree({ openingId, openingName, repertoireId, side }) {
                     commentPosition(
                       currentPositionId,
                       "",
-                      positionComment,
-                      undefined
-                    )
-                      .then(() =>
-                        console.log("Position comment saved successfully")
-                      )
-                      .catch((error) =>
+                      positionComment
+                    ).catch((error) =>
                         console.error("Error saving position comment:", error)
                       );
                   }
