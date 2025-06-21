@@ -23,6 +23,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import moveSound from "@/assets/move.mp3";
 
 function getSanMoveFromFens(fromFen, toFen) {
   const chess = new Chess(fromFen);
@@ -53,7 +54,7 @@ export function OpeningTree({ openingId, openingName, repertoireId, side }) {
 
   const moveSoundRef = useRef(null);
   useEffect(() => {
-    moveSoundRef.current = new Audio("/move.mp3");
+    moveSoundRef.current = new Audio(moveSound);
   }, []);
 
   const processAndSetNextMoves = useCallback(
