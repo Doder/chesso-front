@@ -544,10 +544,24 @@ export function OpeningTree({ openingId, openingName, repertoireId, side }) {
                             {currentComment || "Add comment..."}
                           </span>
                         )}
-                        <span className="ml-auto">
+                        <span className="ml-auto flex gap-4">
+                        {isSecondaryOpening ? (
+                          <span className="col-span-1 text-xs text-muted-foreground bg-black/80 px-1 py-0.5 rounded text-white text-center leading-[2]">
+                            {move.opening_name}
+                          </span>
+                        ) : (
+                          index > 0 && (
+                            <span title="Promote move" className="flex justify-center items-center">
+                              <SquareChevronUp
+                                className="w-5 h-5 cursor-pointer ml-auto text-primary"
+                                onClick={() => handleMoveUp(moveId)}
+                              />
+                            </span>
+                          )
+                        )}
                           <AlertDialog>
                             <AlertDialogTrigger>
-                              <Trash2 className="w-6 h-6 text-red-500 cursor-pointer ml-auto text-primary" />
+                              <Trash2 className="w-5 h-5 min-w-5 text-red-500 cursor-pointer ml-auto text-primary" />
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
@@ -570,20 +584,7 @@ export function OpeningTree({ openingId, openingName, repertoireId, side }) {
                             </AlertDialogContent>
                           </AlertDialog>
                         </span>
-                        {isSecondaryOpening ? (
-                          <span className="col-span-1 text-xs text-muted-foreground bg-black/80 px-1 py-0.5 rounded text-white text-center leading-[2]">
-                            {move.opening_name}
-                          </span>
-                        ) : (
-                          index > 0 && (
-                            <span title="Promote move">
-                              <SquareChevronUp
-                                className="w-6 h-6 cursor-pointer ml-auto text-primary"
-                                onClick={() => handleMoveUp(moveId)}
-                              />
-                            </span>
-                          )
-                        )}
+                        
                       </div>
                     </motion.div>
                   );
