@@ -1,9 +1,9 @@
 import api from '@/lib/axios'
-import { setToken, removeToken } from '@/lib/storage'
+import {setToken, removeToken} from '@/lib/storage'
 
 export const login = async (email, password) => {
-  const response = await api.post('/login', { email, password })
-  const { token } = response.data
+  const response = await api.post('/login', {email, password})
+  const {token} = response.data
   if (token) {
     setToken(token)
   }
@@ -11,13 +11,13 @@ export const login = async (email, password) => {
 }
 
 export const register = async (username, email, password, rating) => {
-  const payload = { username, email, password };
+  const payload = {username, email, password};
   if (rating) {
     payload.rating = parseInt(rating, 10);
   }
   const response = await api.post('/register', payload);
-  
-  const { token } = response.data;
+
+  const {token} = response.data;
   if (token) {
     setToken(token);
   }
@@ -26,5 +26,5 @@ export const register = async (username, email, password, rating) => {
 
 export const logout = () => {
   removeToken()
-  window.location.href = '/login'
+  window.location.href = '/'
 }
