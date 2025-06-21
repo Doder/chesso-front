@@ -51,6 +51,11 @@ export function OpeningTree({ openingId, openingName, repertoireId, side }) {
   const [positionComment, setPositionComment] = useState("");
   const [currentPositionId, setCurrentPositionId] = useState(null);
 
+  const moveSoundRef = useRef(null);
+  useEffect(() => {
+    moveSoundRef.current = new Audio("/move.mp3");
+  }, []);
+
   const processAndSetNextMoves = useCallback(
     (apiNextMoves) => {
       const processedMoves = apiNextMoves.map((nm) => ({
@@ -293,6 +298,10 @@ export function OpeningTree({ openingId, openingName, repertoireId, side }) {
       const newHistory = game.history();
       setHistory(newHistory);
       setCurrentMove(newHistory.length - 1);
+      if (moveSoundRef.current) {
+        moveSoundRef.current.currentTime = 0;
+        moveSoundRef.current.play();
+      }
       return true;
     } catch {
       return false;
