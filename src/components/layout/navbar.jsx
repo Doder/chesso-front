@@ -49,7 +49,7 @@ export function Navbar() {
           </Link>
         </div>
         <div className="ml-auto flex items-center space-x-4">
-          {user && <span className="text-sm font-medium">{user.username}</span>}
+          {user && <span className="text-sm font-medium">{user.Username}</span>}
           <Button variant="ghost" size="icon">
             <User className="size-4" />
           </Button>
