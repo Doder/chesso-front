@@ -28,3 +28,8 @@ export const logout = () => {
   removeToken()
   window.location.href = '/'
 }
+
+export const getCurrentUser = async () => {
+  const response = await api.get('/me');
+  return response.data;
+}
