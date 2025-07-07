@@ -243,6 +243,26 @@ export function Train() {
     }
   }, [showSuccessOverlay, currentGame])
 
+  const isDraggablePiece = useCallback(({ piece, sourceSquare }) => {
+    if (!currentPosition) return false
+    
+    // Get the opening side (what color the user is playing)
+    let openingSide
+    if (currentPosition.Opening?.side) {
+      openingSide = currentPosition.Opening.side
+    } else {
+      // Fallback: find the opening from our openings data
+      const opening = openings.find(o => o.ID === currentPosition.opening_id)
+      openingSide = opening?.side
+    }
+    
+    if (!openingSide) return false
+    
+    // Check if piece color matches opening side
+    const pieceColor = piece[0] // 'w' or 'b' (first character of piece notation like 'wP', 'bK')
+    return pieceColor === openingSide
+  }, [currentPosition, openings, showSuccessOverlay])
+
   const handleMove = useCallback((sourceSquare, targetSquare) => {
     if (!currentGame || !currentPosition || showSuccessOverlay) return false
 
@@ -449,6 +469,7 @@ export function Train() {
                 boardOrientation={boardOrientation}
                 areArrowsAllowed={false}
                 arePiecesDraggable={!showSuccessOverlay}
+                isDraggablePiece={isDraggablePiece}
                 customDarkSquareStyle={{ backgroundColor: '#D3D3D3' }}
                 customLightSquareStyle={{ backgroundColor: '#EBEBEB' }}
                 customBoardStyle={{
