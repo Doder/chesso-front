@@ -17,6 +17,7 @@ export function Train() {
   const [loading, setLoading] = useState(true)
   const [isTraining, setIsTraining] = useState(false)
   const [trainingPositions, setTrainingPositions] = useState([])
+  const [solvedPositions, setSolvedPositions] = useState(new Set())
   const [currentPosition, setCurrentPosition] = useState(null)
   const [currentGame, setCurrentGame] = useState(null)
   const [feedback, setFeedback] = useState(null)
@@ -181,11 +182,12 @@ export function Train() {
         const response = await getPositionsByOpeningIds(Array.from(selectedOpenings))
         const positions = response.data.filter(pos => pos.fen !== 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
         setTrainingPositions(positions)
+        setSolvedPositions(new Set())
         setIsTraining(true)
         setScore({ correct: 0, total: 0 })
         setShowSuccessOverlay(false)
         setOverlayFading(false)
-        loadRandomPosition(positions)
+        loadRandomPosition(positions, new Set())
       } catch (error) {
         console.error('Error fetching training positions:', error)
       } finally {
@@ -194,11 +196,20 @@ export function Train() {
     }
   }
 
-  const loadRandomPosition = useCallback((positions) => {
+  const loadRandomPosition = useCallback((positions, solved = solvedPositions) => {
     if (positions.length === 0) return
     
-    const randomIndex = Math.floor(Math.random() * positions.length)
-    const position = positions[randomIndex]
+    // Filter out solved positions
+    const unsolvedPositions = positions.filter(pos => !solved.has(pos.ID))
+    
+    // If all positions are solved, show completion message or restart
+    if (unsolvedPositions.length === 0) {
+      setFeedback({ type: 'success', message: 'All positions completed! Great job!' })
+      return
+    }
+    
+    const randomIndex = Math.floor(Math.random() * unsolvedPositions.length)
+    const position = unsolvedPositions[randomIndex]
     setCurrentPosition(position)
     setCurrentGame(new Chess(position.fen))
     setFeedback(null)
@@ -215,7 +226,7 @@ export function Train() {
         setBoardOrientation(opening.side === 'b' ? 'black' : 'white')
       }
     }
-  }, [openings])
+  }, [openings, solvedPositions])
 
   // Handle overlay fade-out with useEffect
   useEffect(() => {
@@ -275,8 +286,13 @@ export function Train() {
             })
           }
           
+          // Mark position as solved
+          const newSolvedPositions = new Set(solvedPositions)
+          newSolvedPositions.add(currentPosition.ID)
+          setSolvedPositions(newSolvedPositions)
+          
           // Load next position after celebration period
-          loadRandomPosition(trainingPositions)
+          loadRandomPosition(trainingPositions, newSolvedPositions)
         } else {
           setFeedback({ type: 'error', message: 'Incorrect move. Try again!' })
           setScore(prev => ({ ...prev, total: prev.total + 1 }))
@@ -353,16 +369,29 @@ export function Train() {
     }
   }
 
-  const exitTraining = () => {
+  const exitTraining = async () => {
     setIsTraining(false)
     setCurrentPosition(null)
     setCurrentGame(null)
     setTrainingPositions([])
+    setSolvedPositions(new Set())
     setFeedback(null)
     setScore({ correct: 0, total: 0 })
     setHighlightedSquares({})
     setShowSuccessOverlay(false)
     setOverlayFading(false)
+    
+    // Refresh position counts after training
+    try {
+      if (openings.length > 0) {
+        const openingIds = openings.map(opening => opening.ID)
+        const countsRes = await getPositionCountsByOpeningIds(openingIds)
+        setPositionCounts(countsRes.data.counts || countsRes.data)
+        setNextReviewDays(countsRes.data.nextReviewDays || {})
+      }
+    } catch (error) {
+      console.error('Error refreshing position counts:', error)
+    }
   }
 
   if (loading) {
@@ -485,7 +514,7 @@ export function Train() {
                     )}
                   </div>
                   <div className="mt-2 text-xs text-muted-foreground">
-                    Positions remaining: {trainingPositions.length}
+                    Positions remaining: {trainingPositions.length - solvedPositions.size}
                   </div>
                 </div>
               </div>
