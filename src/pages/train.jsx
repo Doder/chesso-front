@@ -180,7 +180,7 @@ export function Train() {
       setLoading(true)
       try {
         const response = await getPositionsByOpeningIds(Array.from(selectedOpenings))
-        const positions = response.data.filter(pos => pos.fen !== 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
+        const positions = response.data
         setTrainingPositions(positions)
         setSolvedPositions(new Set())
         setIsTraining(true)
