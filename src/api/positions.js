@@ -36,3 +36,17 @@ export const getPositionsByOpeningIds = (openingIds) => {
     params: { opening_ids: openingIds.join(',') }
   })
 }
+
+export const updatePositionCorrectGuess = (positionId) => {
+  return api.post(`/positions/${positionId}/correct`)
+}
+
+export const resetPositionProgress = (positionId) => {
+  return api.post(`/positions/${positionId}/incorrect`)
+}
+
+export const getPositionCountsByOpeningIds = (openingIds) => {
+  return api.get('/positions/counts-by-openings', {
+    params: { opening_ids: openingIds.join(',') }
+  })
+}

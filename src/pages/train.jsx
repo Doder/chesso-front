@@ -4,7 +4,7 @@ import { Chess } from 'chess.js'
 import { Chessboard } from 'react-chessboard'
 import { getRepertoires } from '@/api/repertoire'
 import { getAllOpenings } from '@/api/openings'
-import { getPositionsByOpeningIds } from '@/api/positions'
+import { getPositionsByOpeningIds, updatePositionCorrectGuess, resetPositionProgress, getPositionCountsByOpeningIds } from '@/api/positions'
 import { Button } from '@/components/ui/button'
 import moveSound from '@/assets/move.mp3'
 
@@ -23,6 +23,10 @@ export function Train() {
   const [score, setScore] = useState({ correct: 0, total: 0 })
   const [showHint, setShowHint] = useState(false)
   const [highlightedSquares, setHighlightedSquares] = useState({})
+  const [boardOrientation, setBoardOrientation] = useState("white")
+  const [showSuccessOverlay, setShowSuccessOverlay] = useState(false)
+  const [overlayFading, setOverlayFading] = useState(false)
+  const [positionCounts, setPositionCounts] = useState({})
   const moveSoundRef = React.useRef(null)
 
   useEffect(() => {
@@ -41,6 +45,13 @@ export function Train() {
       ])
       setRepertoires(repertoireRes.data)
       setOpenings(openingsRes.data)
+      
+      // Fetch position counts for all openings
+      if (openingsRes.data.length > 0) {
+        const openingIds = openingsRes.data.map(opening => opening.ID)
+        const countsRes = await getPositionCountsByOpeningIds(openingIds)
+        setPositionCounts(countsRes.data)
+      }
     } catch (error) {
       console.error('Error fetching data:', error)
     } finally {
@@ -124,6 +135,25 @@ export function Train() {
     return selectedOpenings.size
   }
 
+  const getRepertoirePositionCount = (repertoireId) => {
+    const repertoireOpenings = getOpeningsForRepertoire(repertoireId)
+    return repertoireOpenings.reduce((total, opening) => {
+      return total + (positionCounts[opening.ID] || 0)
+    }, 0)
+  }
+
+  const getOpeningPositionCount = (openingId) => {
+    return positionCounts[openingId] || 0
+  }
+
+  const getTotalTrainablePositions = () => {
+    return Object.values(positionCounts).reduce((total, count) => total + count, 0)
+  }
+
+  const hasAnyTrainableRepertoires = () => {
+    return repertoires.some(repertoire => getRepertoirePositionCount(repertoire.ID) > 0)
+  }
+
   const startTraining = async () => {
     if (selectedOpenings.size > 0) {
       setLoading(true)
@@ -133,6 +163,8 @@ export function Train() {
         setTrainingPositions(positions)
         setIsTraining(true)
         setScore({ correct: 0, total: 0 })
+        setShowSuccessOverlay(false)
+        setOverlayFading(false)
         loadRandomPosition(positions)
       } catch (error) {
         console.error('Error fetching training positions:', error)
@@ -142,7 +174,7 @@ export function Train() {
     }
   }
 
-  const loadRandomPosition = (positions) => {
+  const loadRandomPosition = useCallback((positions) => {
     if (positions.length === 0) return
     
     const randomIndex = Math.floor(Math.random() * positions.length)
@@ -152,20 +184,48 @@ export function Train() {
     setFeedback(null)
     setShowHint(false)
     setHighlightedSquares({})
-  }
+    
+    // Set board orientation based on the opening side
+    if (position.Opening?.side) {
+      setBoardOrientation(position.Opening.side === 'b' ? 'black' : 'white')
+    } else {
+      // Fallback: find the opening from our openings data
+      const opening = openings.find(o => o.ID === position.opening_id)
+      if (opening) {
+        setBoardOrientation(opening.side === 'b' ? 'black' : 'white')
+      }
+    }
+  }, [openings])
+
+  // Handle overlay fade-out with useEffect
+  useEffect(() => {
+    if (showSuccessOverlay && currentGame) {
+      const fadeTimer = setTimeout(() => {
+        setOverlayFading(true)
+        const hideTimer = setTimeout(() => {
+          setShowSuccessOverlay(false)
+          setOverlayFading(false)
+        }, 500)
+        return () => clearTimeout(hideTimer)
+      }, 50)
+      return () => clearTimeout(fadeTimer)
+    }
+  }, [showSuccessOverlay, currentGame])
 
   const handleMove = useCallback((sourceSquare, targetSquare) => {
-    if (!currentGame || !currentPosition) return false
+    if (!currentGame || !currentPosition || showSuccessOverlay) return false
 
     try {
-      const move = currentGame.move({
+      // Create a copy to test the move without affecting display
+      const testGame = new Chess(currentGame.fen())
+      const move = testGame.move({
         from: sourceSquare,
         to: targetSquare,
         promotion: 'q' // Always promote to queen for simplicity
       })
 
       if (move) {
-        const newFen = currentGame.fen()
+        const newFen = testGame.fen()
         
         // Check if this move leads to any of the next positions
         const isCorrect = currentPosition.NextPositions?.some(nextPos => 
@@ -173,21 +233,43 @@ export function Train() {
         )
 
         if (isCorrect) {
+          // Apply the move to the display game
+          currentGame.move({
+            from: sourceSquare,
+            to: targetSquare,
+            promotion: 'q'
+          })
+          
           setFeedback({ type: 'success', message: 'Correct move!' })
           setScore(prev => ({ correct: prev.correct + 1, total: prev.total + 1 }))
           moveSoundRef.current?.play()
           setHighlightedSquares({})
           
-          // Load next position after a short delay
-          setTimeout(() => {
-            loadRandomPosition(trainingPositions)
-          }, 1500)
+          // Show success overlay
+          setShowSuccessOverlay(true)
+          
+          // Update spaced repetition progress for correct guess
+          if (currentPosition?.ID) {
+            updatePositionCorrectGuess(currentPosition.ID).catch(error => {
+              console.error('Error updating position progress:', error)
+            })
+          }
+          
+          // Load next position after celebration period
+          loadRandomPosition(trainingPositions)
         } else {
           setFeedback({ type: 'error', message: 'Incorrect move. Try again!' })
           setScore(prev => ({ ...prev, total: prev.total + 1 }))
           setHighlightedSquares({})
-          // Reset the game state
-          setCurrentGame(new Chess(currentPosition.fen))
+          
+          // Reset spaced repetition progress for incorrect guess
+          if (currentPosition?.ID) {
+            resetPositionProgress(currentPosition.ID).catch(error => {
+              console.error('Error resetting position progress:', error)
+            })
+          }
+          
+          // Don't apply incorrect moves
         }
 
         return true
@@ -198,11 +280,19 @@ export function Train() {
     }
 
     return false
-  }, [currentGame, currentPosition, trainingPositions])
+  }, [currentGame, currentPosition, trainingPositions, showSuccessOverlay])
 
   const skipPosition = () => {
     setFeedback({ type: 'info', message: 'Position skipped' })
     setScore(prev => ({ ...prev, total: prev.total + 1 }))
+    
+    // Reset spaced repetition progress for skipped position
+    if (currentPosition?.ID) {
+      resetPositionProgress(currentPosition.ID).catch(error => {
+        console.error('Error resetting position progress:', error)
+      })
+    }
+    
     loadRandomPosition(trainingPositions)
   }
 
@@ -251,6 +341,8 @@ export function Train() {
     setFeedback(null)
     setScore({ correct: 0, total: 0 })
     setHighlightedSquares({})
+    setShowSuccessOverlay(false)
+    setOverlayFading(false)
   }
 
   if (loading) {
@@ -301,11 +393,13 @@ export function Train() {
         {/* Chess Board and Info */}
         {currentGame && (
           <div className="lg:flex gap-6">
-            <div className="flex-1 mb-4">
+            <div className="flex-1 mb-4 relative" style={{ minHeight: '400px', minWidth: '400px' }}>
               <Chessboard 
                 position={currentGame.fen()}
                 onPieceDrop={handleMove}
-                arePiecesDraggable={true}
+                boardOrientation={boardOrientation}
+                areArrowsAllowed={false}
+                arePiecesDraggable={!showSuccessOverlay}
                 customDarkSquareStyle={{ backgroundColor: '#D3D3D3' }}
                 customLightSquareStyle={{ backgroundColor: '#EBEBEB' }}
                 customBoardStyle={{
@@ -315,6 +409,27 @@ export function Train() {
                 }}
                 customSquareStyles={highlightedSquares}
               />
+              
+              {/* Success Overlay */}
+              {showSuccessOverlay && (
+                <div 
+                  className={`absolute inset-0 flex items-center justify-center bg-green-500 rounded-lg transition-opacity duration-500 ease-out ${
+                    overlayFading ? 'opacity-0' : 'opacity-100'
+                  }`}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    minWidth: '400px',
+                    minHeight: '400px'
+                  }}
+                >
+                  <div className={`bg-white rounded-full p-4 transition-transform duration-300 ${
+                    overlayFading ? 'scale-90' : 'animate-bounce'
+                  }`}>
+                    <CheckCircle className="w-16 h-16 text-green-500" />
+                  </div>
+                </div>
+              )}
             </div>
             
             <div className="flex-1 space-y-4">
@@ -396,15 +511,21 @@ export function Train() {
               <th className="px-4 py-3 text-left font-semibold">
                 <input
                   type="checkbox"
-                  className="mr-3"
-                  checked={selectedRepertoires.size === repertoires.length && repertoires.length > 0}
+                  className={`mr-3 ${!hasAnyTrainableRepertoires() ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  checked={selectedRepertoires.size === repertoires.length && repertoires.length > 0 && hasAnyTrainableRepertoires()}
+                  disabled={!hasAnyTrainableRepertoires()}
                   onChange={() => {
+                    if (!hasAnyTrainableRepertoires()) return
+                    
                     if (selectedRepertoires.size === repertoires.length) {
                       setSelectedRepertoires(new Set())
                       setSelectedOpenings(new Set())
                     } else {
-                      setSelectedRepertoires(new Set(repertoires.map(r => r.ID)))
-                      setSelectedOpenings(new Set(openings.map(o => o.ID)))
+                      // Only select repertoires that have trainable positions
+                      const trainableRepertoires = repertoires.filter(r => getRepertoirePositionCount(r.ID) > 0)
+                      const trainableOpenings = openings.filter(o => getOpeningPositionCount(o.ID) > 0)
+                      setSelectedRepertoires(new Set(trainableRepertoires.map(r => r.ID)))
+                      setSelectedOpenings(new Set(trainableOpenings.map(o => o.ID)))
                     }
                   }}
                 />
@@ -412,6 +533,7 @@ export function Train() {
               </th>
               <th className="px-4 py-3 text-left font-semibold">Side</th>
               <th className="px-4 py-3 text-left font-semibold">Type</th>
+              <th className="px-4 py-3 text-left font-semibold">Positions to Train</th>
             </tr>
           </thead>
           <tbody>
@@ -420,6 +542,8 @@ export function Train() {
               const isExpanded = expandedRepertoires.has(repertoire.ID)
               const isSelected = selectedRepertoires.has(repertoire.ID)
               const isPartiallySelected = isRepertoirePartiallySelected(repertoire.ID)
+              const repertoirePositionCount = getRepertoirePositionCount(repertoire.ID)
+              const isRepertoireDisabled = repertoirePositionCount === 0
               
               return (
                 <React.Fragment key={repertoire.ID}>
@@ -428,12 +552,13 @@ export function Train() {
                       <div className="flex items-center">
                         <input
                           type="checkbox"
-                          className="mr-3"
-                          checked={isSelected}
+                          className={`mr-3 ${isRepertoireDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          checked={isSelected && !isRepertoireDisabled}
+                          disabled={isRepertoireDisabled}
                           ref={input => {
-                            if (input) input.indeterminate = isPartiallySelected && !isSelected
+                            if (input) input.indeterminate = isPartiallySelected && !isSelected && !isRepertoireDisabled
                           }}
-                          onChange={() => toggleRepertoireSelection(repertoire.ID)}
+                          onChange={() => !isRepertoireDisabled && toggleRepertoireSelection(repertoire.ID)}
                         />
                         <button
                           onClick={() => toggleRepertoireExpansion(repertoire.ID)}
@@ -454,20 +579,30 @@ export function Train() {
                         Repertoire ({repertoireOpenings.length})
                       </span>
                     </td>
+                    <td className="px-4 py-3">
+                      <span className={`font-medium ${repertoirePositionCount === 0 ? 'text-gray-400' : 'text-gray-900'}`}>
+                        {repertoirePositionCount}
+                      </span>
+                    </td>
                   </tr>
-                  {isExpanded && repertoireOpenings.map((opening) => (
-                    <tr key={opening.ID} className="border-b border-border hover:bg-secondary/5">
-                      <td className="px-4 py-3">
-                        <div className="flex items-center ml-8">
-                          <input
-                            type="checkbox"
-                            className="mr-3"
-                            checked={selectedOpenings.has(opening.ID)}
-                            onChange={() => toggleOpeningSelection(opening.ID, repertoire.ID)}
-                          />
-                          <span>{opening.name}</span>
-                        </div>
-                      </td>
+                  {isExpanded && repertoireOpenings.map((opening) => {
+                    const openingPositionCount = getOpeningPositionCount(opening.ID)
+                    const isOpeningDisabled = openingPositionCount === 0
+                    
+                    return (
+                      <tr key={opening.ID} className="border-b border-border hover:bg-secondary/5">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center ml-8">
+                            <input
+                              type="checkbox"
+                              className={`mr-3 ${isOpeningDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              checked={selectedOpenings.has(opening.ID) && !isOpeningDisabled}
+                              disabled={isOpeningDisabled}
+                              onChange={() => !isOpeningDisabled && toggleOpeningSelection(opening.ID, repertoire.ID)}
+                            />
+                            <span className={isOpeningDisabled ? 'text-gray-400' : ''}>{opening.name}</span>
+                          </div>
+                        </td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-1 rounded text-sm ${
                           opening.side === 'w' 
@@ -482,14 +617,20 @@ export function Train() {
                           Opening
                         </span>
                       </td>
+                      <td className="px-4 py-3">
+                        <span className={`font-medium ${openingPositionCount === 0 ? 'text-gray-400' : 'text-gray-900'}`}>
+                          {openingPositionCount}
+                        </span>
+                      </td>
                     </tr>
-                  ))}
+                    )
+                  })}
                 </React.Fragment>
               )
             })}
             {repertoires.length === 0 && (
               <tr>
-                <td colSpan="3" className="px-4 py-3 text-center text-muted-foreground">
+                <td colSpan="4" className="px-4 py-3 text-center text-muted-foreground">
                   No repertoires found
                 </td>
               </tr>
