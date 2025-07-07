@@ -27,6 +27,7 @@ export function Train() {
   const [showSuccessOverlay, setShowSuccessOverlay] = useState(false)
   const [overlayFading, setOverlayFading] = useState(false)
   const [positionCounts, setPositionCounts] = useState({})
+  const [nextReviewDays, setNextReviewDays] = useState({})
   const moveSoundRef = React.useRef(null)
 
   useEffect(() => {
@@ -50,7 +51,8 @@ export function Train() {
       if (openingsRes.data.length > 0) {
         const openingIds = openingsRes.data.map(opening => opening.ID)
         const countsRes = await getPositionCountsByOpeningIds(openingIds)
-        setPositionCounts(countsRes.data)
+        setPositionCounts(countsRes.data.counts || countsRes.data)
+        setNextReviewDays(countsRes.data.nextReviewDays || {})
       }
     } catch (error) {
       console.error('Error fetching data:', error)
@@ -152,6 +154,24 @@ export function Train() {
 
   const hasAnyTrainableRepertoires = () => {
     return repertoires.some(repertoire => getRepertoirePositionCount(repertoire.ID) > 0)
+  }
+
+  const formatNextReviewText = (days) => {
+    if (days === -1) return ''
+    if (days === 1) return ' (tomorrow)'
+    return ` (in ${days} days)`
+  }
+
+  const getRepertoireNextReviewDays = (repertoireId) => {
+    const repertoireOpenings = getOpeningsForRepertoire(repertoireId)
+    const validDays = repertoireOpenings
+      .map(opening => nextReviewDays[opening.ID])
+      .filter(days => days > 0)
+    return validDays.length > 0 ? Math.min(...validDays) : -1
+  }
+
+  const getOpeningNextReviewDays = (openingId) => {
+    return nextReviewDays[openingId] || -1
   }
 
   const startTraining = async () => {
@@ -582,6 +602,7 @@ export function Train() {
                     <td className="px-4 py-3">
                       <span className={`font-medium ${repertoirePositionCount === 0 ? 'text-gray-400' : 'text-gray-900'}`}>
                         {repertoirePositionCount}
+                        {repertoirePositionCount === 0 && formatNextReviewText(getRepertoireNextReviewDays(repertoire.ID))}
                       </span>
                     </td>
                   </tr>
@@ -620,6 +641,7 @@ export function Train() {
                       <td className="px-4 py-3">
                         <span className={`font-medium ${openingPositionCount === 0 ? 'text-gray-400' : 'text-gray-900'}`}>
                           {openingPositionCount}
+                          {openingPositionCount === 0 && formatNextReviewText(getOpeningNextReviewDays(opening.ID))}
                         </span>
                       </td>
                     </tr>
