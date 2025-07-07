@@ -8,6 +8,7 @@ import {Repertoires} from './pages/repertoires'
 import {Repertoire} from './pages/repertoire'
 import {getToken} from './lib/storage'
 import {Opening} from './pages/opening'
+import {Train} from './pages/train'
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -53,6 +54,7 @@ function App() {
           <Route path="repertoires" element={<Repertoires />} />
           <Route path="repertoire/:id" element={<Repertoire />} />
           <Route path="repertoire/:rid/opening/:oid" element={<Opening />} />
+          <Route path="train" element={<Train />} />
         </Route>
       </Routes>
     </Router>

@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import { getUser, setUser, removeUser } from '@/lib/storage'
 import { getCurrentUser, logout } from '@/api/auth'
-import { Outlet, Link} from 'react-router-dom'
+import { Outlet, Link, useLocation } from 'react-router-dom'
 import { Button } from './ui/button'
 import { LogOut } from 'lucide-react'
 
 export default function Layout() {
   const [user, setCurrentUser] = useState(getUser());
+  const location = useLocation();
   
   useEffect(() => {
     const fetchUser = async () => {
@@ -43,7 +44,12 @@ export default function Layout() {
                 {/* <li><Button variant="ghost">Settings</Button></li> */}
                 <li className="hidden lg:block">
                   <Link to="/repertoires">
-                    <Button variant="ghost">Repertoires</Button>
+                    <Button variant={location.pathname.startsWith('/repertoire') ? 'default' : 'ghost'}>Repertoires</Button>
+                  </Link>
+                </li>
+                <li className="hidden lg:block">
+                  <Link to="/train">
+                    <Button variant={location.pathname === '/train' ? 'default' : 'ghost'}>Train</Button>
                   </Link>
                 </li>
               </ul>

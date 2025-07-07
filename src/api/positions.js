@@ -30,3 +30,9 @@ export const commentPosition = (id, evaluation, comment, order) => {
 export const deleteMove = (id) => {
   return api.delete('/positions/' + id)
 }
+
+export const getPositionsByOpeningIds = (openingIds) => {
+  return api.get('/positions/by-openings', {
+    params: { opening_ids: openingIds.join(',') }
+  })
+}

@@ -26,7 +26,7 @@ export const register = async (username, email, password, rating) => {
 
 export const logout = () => {
   removeToken()
-  window.location.href = '/'
+  window.location.href = '/app'
 }
 
 export const getCurrentUser = async () => {

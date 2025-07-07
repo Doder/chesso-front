@@ -4,6 +4,10 @@ export const getOpenings = (id) => {
   return api.get(`/repertoires/${id}`)
 }
 
+export const getAllOpenings = () => {
+  return api.get('/openings/')
+}
+
 export const getOpening = (id) => {
   return api.get(`/openings/${id}`)
 }

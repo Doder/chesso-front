@@ -10,7 +10,7 @@ export default function RegisterPage({ onRegister }) {
       onRegister();
     } else {
       // Default behavior if no onRegister prop is passed, e.g., redirect to login
-      window.location.href = '/login'; 
+      window.location.href = '/app/login'; 
     }
   };
 
