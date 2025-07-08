@@ -9,6 +9,8 @@ import {Repertoire} from './pages/repertoire'
 import {getToken} from './lib/storage'
 import {Opening} from './pages/opening'
 import {Train} from './pages/train'
+import ForgotPasswordPage from './pages/forgot-password'
+import ResetPasswordPage from './pages/reset-password'
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -44,6 +46,16 @@ function App() {
           isAuthenticated ?
             <Navigate to="/" /> :
             <RegisterPage onRegister={handleRegisterSuccess} />
+        } />
+        <Route path="/forgot-password" element={
+          isAuthenticated ?
+            <Navigate to="/" /> :
+            <ForgotPasswordPage />
+        } />
+        <Route path="/reset-password/:token" element={
+          isAuthenticated ?
+            <Navigate to="/" /> :
+            <ResetPasswordPage />
         } />
         <Route path="/" element={
           isAuthenticated ?

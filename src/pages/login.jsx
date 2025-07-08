@@ -1,9 +1,12 @@
 import { GalleryVerticalEnd } from "lucide-react"
+import { useLocation } from "react-router-dom"
 
 import { LoginForm } from "@/components/login-form"
 import chess_bg from "@/assets/chess_bg.jpg"
 
 export default function LoginPage({ onLogin }) {
+  const location = useLocation()
+  const message = location.state?.message
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
       <div className="flex flex-col gap-4 p-6 md:p-10">
@@ -15,6 +18,11 @@ export default function LoginPage({ onLogin }) {
         </div>
         <div className="flex flex-1 items-center justify-center">
           <div className="w-full max-w-xs">
+            {message && (
+              <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
+                <p className="text-sm text-green-800">{message}</p>
+              </div>
+            )}
             <LoginForm onLogin={onLogin} />
           </div>
         </div>
