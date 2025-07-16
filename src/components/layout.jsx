@@ -4,6 +4,7 @@ import { getCurrentUser, logout } from '@/api/auth'
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { Button } from './ui/button'
 import { LogOut } from 'lucide-react'
+import HamburgerMenu from './hamburger-menu'
 
 export default function Layout() {
   const [user, setCurrentUser] = useState(getUser());
@@ -38,26 +39,29 @@ export default function Layout() {
             </Link>
           </div>
           <div className="flex items-center space-x-4">
-            <nav>
+            <nav className="hidden lg:block">
               <ul className="flex space-x-4">
                 {/* <li><Button variant="ghost">Profile</Button></li> */}
                 {/* <li><Button variant="ghost">Settings</Button></li> */}
-                <li className="hidden lg:block">
+                <li>
                   <Link to="/repertoires">
                     <Button variant={location.pathname.startsWith('/repertoire') ? 'default' : 'ghost'}>Repertoires</Button>
                   </Link>
                 </li>
-                <li className="hidden lg:block">
+                <li>
                   <Link to="/train">
                     <Button variant={location.pathname === '/train' ? 'default' : 'ghost'}>Train</Button>
                   </Link>
                 </li>
               </ul>
             </nav>
-            {user && <span className="text-sm font-medium">{user.Username}</span>}
-            <Button variant="ghost" size="icon" onClick={logout}>
-              <LogOut className="size-4" />
-            </Button>
+            <div className="hidden lg:flex items-center space-x-4">
+              {user && <span className="text-sm font-medium">{user.Username}</span>}
+              <Button variant="ghost" size="icon" onClick={logout}>
+                <LogOut className="size-4" />
+              </Button>
+            </div>
+            <HamburgerMenu user={user} />
           </div>
         </div>
       </header>

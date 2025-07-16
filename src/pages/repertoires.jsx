@@ -77,17 +77,69 @@ export function Repertoires() {
 
   return (
     <div className="container py-6">
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
         <h2 className="text-2xl font-semibold">Repertoires</h2>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
+          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 w-full sm:w-auto justify-center"
         >
           <Plus className="w-4 h-4" />
           New Repertoire
         </button>
       </div>
-      <div className="border border-border rounded-lg overflow-hidden">
+      
+      {/* Mobile Card View */}
+      <div className="block md:hidden space-y-4">
+        {repertoires.map((repertoire) => (
+          <div 
+            key={repertoire.ID} 
+            className="border border-border rounded-lg p-4 hover:bg-secondary/5 cursor-pointer"
+            onClick={() => navigate(`/repertoire/${repertoire.ID}`)}
+          >
+            <div className="flex justify-between items-start mb-2">
+              <h3 className="font-semibold">{repertoire.name}</h3>
+              <div className="flex gap-2">
+                <button
+                  onClick={(e) => handleEditClick(e, repertoire.ID)}
+                  className="p-2 text-gray-500 hover:text-gray-600 hover:bg-gray-50 rounded"
+                >
+                  <PenIcon className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={(e) => handleDeleteClick(e, repertoire.ID)}
+                  className="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            <div className="text-sm text-muted-foreground space-y-1">
+              <div>
+                Created: {repertoire.CreatedAt && 
+                  DateTime.fromISO(repertoire.CreatedAt, { zone: 'utc' })
+                    .setZone('local')
+                    .toFormat('dd.MM.yyyy HH:mm')
+                }
+              </div>
+              <div>
+                Updated: {repertoire.UpdatedAt && 
+                  DateTime.fromISO(repertoire.UpdatedAt, { zone: 'utc' })
+                    .setZone('local')
+                    .toFormat('dd.MM.yyyy HH:mm')
+                }
+              </div>
+            </div>
+          </div>
+        ))}
+        {repertoires.length === 0 && (
+          <div className="text-center text-muted-foreground py-8">
+            No repertoires found
+          </div>
+        )}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden md:block border border-border rounded-lg overflow-hidden">
         <table className="w-full">
           <thead>
             <tr className="bg-secondary/5 border-b border-border">
@@ -137,7 +189,7 @@ export function Repertoires() {
             ))}
             {repertoires.length === 0 && (
               <tr>
-                <td colSpan="2" className="px-4 py-3 text-center text-muted-foreground">
+                <td colSpan="4" className="px-4 py-3 text-center text-muted-foreground">
                   No repertoires found
                 </td>
               </tr>

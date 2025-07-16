@@ -337,25 +337,27 @@ export function OpeningTree({ openingId, openingName, repertoireId, side }) {
   };
 
   return (
-    <div className="lg:container">
-      <div className="lg:flex gap-6">
-        <div className="flex-1 mb-4">
-          <Chessboard
-            position={position}
-            onPieceDrop={onDrop}
-            boardOrientation={boardOrientation}
-            customDarkSquareStyle={{ backgroundColor: "#D3D3D3" }}
-            customLightSquareStyle={{ backgroundColor: "#EBEBEB" }}
-            customBoardStyle={{
-              margin: "0 auto",
-              borderRadius: "5px",
-              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
-            }}
-            areArrowsAllowed={false}
-            customArrows={arrows}
-          />
+    <div className="lg:container px-4">
+      <div className="flex flex-col lg:flex-row gap-6">
+        <div className="w-full lg:flex-1 mb-4">
+          <div className="max-w-md mx-auto lg:max-w-none">
+            <Chessboard
+              position={position}
+              onPieceDrop={onDrop}
+              boardOrientation={boardOrientation}
+              customDarkSquareStyle={{ backgroundColor: "#D3D3D3" }}
+              customLightSquareStyle={{ backgroundColor: "#EBEBEB" }}
+              customBoardStyle={{
+                margin: "0 auto",
+                borderRadius: "5px",
+                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+              }}
+              areArrowsAllowed={false}
+              customArrows={arrows}
+            />
+          </div>
         </div>
-        <div className="flex-1 space-y-2">
+        <div className="w-full lg:flex-1 space-y-2">
           {/* Game moves */}
           <div className="border border-border rounded-lg overflow-hidden">
             <div className="bg-secondary/5 border-b border-border px-4 py-3">
@@ -404,7 +406,7 @@ export function OpeningTree({ openingId, openingName, repertoireId, side }) {
           </div>
 
           {/* Move navigation */}
-          <div className="flex gap-2">
+          <div className="flex gap-2 justify-center lg:justify-start">
             <button
               onClick={goToStart}
               disabled={currentMove < 0}
@@ -472,119 +474,220 @@ export function OpeningTree({ openingId, openingName, repertoireId, side }) {
                       transition={{ duration: 0.3, ease: "easeInOut" }}
                       key={moveId}
                       className={classNames(
-                        "flex items-center justify-between py-2 px-4 hover:bg-secondary/50",
+                        "hover:bg-secondary/50",
                         isSecondaryOpening &&
                           arr[index - 1] &&
                           move.opening_name !== arr[index - 1].opening_name &&
                           "border-t"
                       )}
                     >
-                      <div className="w-full grid grid-cols-6 gap-2">
-                        <span
-                          className="font-mono col-span-1 cursor-pointer"
-                          onClick={() => onDrop(move.last_move)}
-                        >
-                          {move.last_move}
-                        </span>
-                        <div className="col-span-1 relative">
-                          <div className="text-sm cursor-pointer relative">
+                      {/* Mobile Layout - Single Row */}
+                      <div className="block lg:hidden">
+                        <div className="flex items-center justify-between py-3 px-4 gap-3">
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
                             <span
-                              className="hover:bg-secondary/30 px-1 py-0.5 rounded"
-                              onClick={() => toggleDropdown(moveId)}
+                              className="font-mono cursor-pointer bg-primary/10 px-2 py-1 rounded text-sm font-medium flex-shrink-0"
+                              onClick={() => onDrop(move.last_move)}
                             >
-                              {currentEvaluation}
+                              {move.last_move}
                             </span>
-                            {isDropdownOpen && (
-                              <div className="absolute left-0 top-full mt-1 bg-background border border-border rounded shadow-lg z-10">
-                                <div className="p-1">
-                                  {evaluationOptions.map((option) => (
-                                    <div
-                                      key={option.value}
-                                      className="px-3 py-1 hover:bg-secondary/30 cursor-pointer"
-                                      onClick={() =>
-                                        handleEvaluationChange(
-                                          moveId,
-                                          option.value
-                                        )
-                                      }
-                                    >
-                                      {option.label}
-                                    </div>
-                                  ))}
+                            
+                            <div className="relative flex-shrink-0">
+                              <span
+                                className="text-xs cursor-pointer hover:bg-secondary/30 px-1 py-0.5 rounded border border-border"
+                                onClick={() => toggleDropdown(moveId)}
+                              >
+                                {currentEvaluation}
+                              </span>
+                              {isDropdownOpen && (
+                                <div className="absolute left-0 top-full mt-1 bg-background border border-border rounded shadow-lg z-10">
+                                  <div className="p-1">
+                                    {evaluationOptions.map((option) => (
+                                      <div
+                                        key={option.value}
+                                        className="px-3 py-1 hover:bg-secondary/30 cursor-pointer"
+                                        onClick={() =>
+                                          handleEvaluationChange(moveId, option.value)
+                                        }
+                                      >
+                                        {option.label}
+                                      </div>
+                                    ))}
+                                  </div>
                                 </div>
-                              </div>
+                              )}
+                            </div>
+                            
+                            {isSecondaryOpening && (
+                              <span className="text-xs text-muted-foreground bg-black/80 px-1 py-0.5 rounded text-white flex-shrink-0">
+                                {move.opening_name}
+                              </span>
                             )}
                           </div>
-                        </div>
-                        {isEditingComment ? (
-                          <input
-                            type="text"
-                            value={currentComment}
-                            onChange={(e) =>
-                              handleCommentChange(moveId, e.target.value)
-                            }
-                            onBlur={() => toggleCommentEdit(moveId)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                toggleCommentEdit(moveId);
-                              }
-                            }}
-                            autoFocus
-                            className="col-span-3 text-sm bg-transparent border-b border-border focus:outline-none"
-                            placeholder="Add comment..."
-                          />
-                        ) : (
-                          <span
-                            className={classNames(
-                              "text-sm text-muted-foreground cursor-pointer hover:bg-secondary/30 px-1 py-0.5 rounded",
-                              isSecondaryOpening ? "col-span-3" : "col-span-3"
-                            )}
-                            onClick={() => toggleCommentEdit(moveId)}
-                          >
-                            {currentComment || "Add comment..."}
-                          </span>
-                        )}
-                        <span className="ml-auto flex gap-4">
-                        {isSecondaryOpening ? (
-                          <span className="col-span-1 text-xs text-muted-foreground bg-black/80 px-1 py-0.5 rounded text-white text-center leading-[2]">
-                            {move.opening_name}
-                          </span>
-                        ) : (
-                          index > 0 && (
-                            <span title="Promote move" className="flex justify-center items-center">
+                          
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {!isSecondaryOpening && index > 0 && (
                               <SquareChevronUp
-                                className="w-5 h-5 cursor-pointer ml-auto text-primary"
+                                className="w-4 h-4 cursor-pointer text-primary"
                                 onClick={() => handleMoveUp(moveId)}
+                                title="Promote move"
                               />
-                            </span>
-                          )
-                        )}
-                          <AlertDialog>
-                            <AlertDialogTrigger>
-                              <Trash2 className="w-5 h-5 min-w-5 text-red-500 cursor-pointer ml-auto text-primary" />
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>
-                                  Are you sure?
-                                </AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This action cannot be undone. This will
-                                  permanently delete your opening line from this move.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleDeleteMove(moveId)}
-                                >
-                                  Continue
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </span>
+                            )}
+                            <AlertDialog>
+                              <AlertDialogTrigger>
+                                <Trash2 className="w-4 h-4 text-red-500 cursor-pointer" />
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete your opening line from this move.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDeleteMove(moveId)}>
+                                    Continue
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </div>
                         
+                        {/* Comments row for mobile */}
+                        <div className="px-4 pb-3">
+                          {isEditingComment ? (
+                            <input
+                              type="text"
+                              value={currentComment}
+                              onChange={(e) => handleCommentChange(moveId, e.target.value)}
+                              onBlur={() => toggleCommentEdit(moveId)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  toggleCommentEdit(moveId);
+                                }
+                              }}
+                              autoFocus
+                              className="w-full text-sm bg-transparent border-b border-border focus:outline-none"
+                              placeholder="Add comment..."
+                            />
+                          ) : (
+                            <span
+                              className="text-sm text-muted-foreground cursor-pointer hover:bg-secondary/30 px-1 py-0.5 rounded block"
+                              onClick={() => toggleCommentEdit(moveId)}
+                            >
+                              {currentComment || "Add comment..."}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Desktop Layout - Improved */}
+                      <div className="hidden lg:block">
+                        <div className="flex items-center justify-between py-3 px-4 gap-4">
+                          <div className="flex items-center gap-4 flex-1 min-w-0">
+                            <span
+                              className="font-mono cursor-pointer bg-primary/10 px-3 py-1.5 rounded font-medium hover:bg-primary/20 transition-colors flex-shrink-0"
+                              onClick={() => onDrop(move.last_move)}
+                            >
+                              {move.last_move}
+                            </span>
+                            
+                            <div className="relative flex-shrink-0">
+                              <span
+                                className="text-sm cursor-pointer hover:bg-secondary/30 px-2 py-1 rounded border border-border transition-colors"
+                                onClick={() => toggleDropdown(moveId)}
+                              >
+                                {currentEvaluation}
+                              </span>
+                              {isDropdownOpen && (
+                                <div className="absolute left-0 top-full mt-1 bg-background border border-border rounded shadow-lg z-10">
+                                  <div className="p-1">
+                                    {evaluationOptions.map((option) => (
+                                      <div
+                                        key={option.value}
+                                        className="px-3 py-1 hover:bg-secondary/30 cursor-pointer"
+                                        onClick={() =>
+                                          handleEvaluationChange(moveId, option.value)
+                                        }
+                                      >
+                                        {option.label}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                            
+                            {isSecondaryOpening && (
+                              <span className="text-sm text-muted-foreground bg-black/80 px-2 py-1 rounded text-white flex-shrink-0">
+                                {move.opening_name}
+                              </span>
+                            )}
+                            
+                            <div className="flex-1 min-w-0">
+                              {isEditingComment ? (
+                                <input
+                                  type="text"
+                                  value={currentComment}
+                                  onChange={(e) =>
+                                    handleCommentChange(moveId, e.target.value)
+                                  }
+                                  onBlur={() => toggleCommentEdit(moveId)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                      toggleCommentEdit(moveId);
+                                    }
+                                  }}
+                                  autoFocus
+                                  className="w-full text-sm bg-transparent border-b border-border focus:outline-none"
+                                  placeholder="Add comment..."
+                                />
+                              ) : (
+                                <span
+                                  className="text-sm text-muted-foreground cursor-pointer hover:bg-secondary/30 px-2 py-1 rounded transition-colors block truncate"
+                                  onClick={() => toggleCommentEdit(moveId)}
+                                >
+                                  {currentComment || "Add comment..."}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-3 flex-shrink-0">
+                            {!isSecondaryOpening && index > 0 && (
+                              <button
+                                className="p-1 hover:bg-secondary/30 rounded transition-colors"
+                                onClick={() => handleMoveUp(moveId)}
+                                title="Promote move"
+                              >
+                                <SquareChevronUp className="w-5 h-5 text-primary" />
+                              </button>
+                            )}
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <button className="p-1 hover:bg-red-50 rounded transition-colors">
+                                  <Trash2 className="w-5 h-5 text-red-500" />
+                                </button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete your opening line from this move.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDeleteMove(moveId)}>
+                                    Continue
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </div>
                       </div>
                     </motion.div>
                   );

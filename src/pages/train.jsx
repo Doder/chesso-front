@@ -425,8 +425,8 @@ export function Train() {
   // Training Mode UI
   if (isTraining) {
     return (
-      <div className="lg:container py-6">
-        <div className="flex justify-between items-center mb-6">
+      <div className="lg:container py-6 px-4">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
           <div className="flex items-center gap-4">
             <Button 
               onClick={exitTraining}
@@ -436,9 +436,9 @@ export function Train() {
               <ArrowLeft className="w-4 h-4" />
               Exit Training
             </Button>
-            <h2 className="text-2xl font-semibold">Training Mode</h2>
+            <h2 className="text-xl lg:text-2xl font-semibold">Training Mode</h2>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto">
             <div className="text-sm font-medium">
               Score: {score.correct}/{score.total} 
               {score.total > 0 && (
@@ -447,11 +447,11 @@ export function Train() {
                 </span>
               )}
             </div>
-            <div className="flex gap-2">
-              <Button onClick={showHintHandler} variant="outline" size="sm">
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button onClick={showHintHandler} variant="outline" size="sm" className="flex-1 sm:flex-initial">
                 Hint
               </Button>
-              <Button onClick={skipPosition} variant="outline" size="sm">
+              <Button onClick={skipPosition} variant="outline" size="sm" className="flex-1 sm:flex-initial">
                 <SkipForward className="w-4 h-4" />
                 Skip
               </Button>
@@ -461,48 +461,43 @@ export function Train() {
 
         {/* Chess Board and Info */}
         {currentGame && (
-          <div className="lg:flex gap-6">
-            <div className="flex-1 mb-4 relative" style={{ minHeight: '400px', minWidth: '400px' }}>
-              <Chessboard 
-                position={currentGame.fen()}
-                onPieceDrop={handleMove}
-                boardOrientation={boardOrientation}
-                areArrowsAllowed={false}
-                arePiecesDraggable={!showSuccessOverlay}
-                isDraggablePiece={isDraggablePiece}
-                customDarkSquareStyle={{ backgroundColor: '#D3D3D3' }}
-                customLightSquareStyle={{ backgroundColor: '#EBEBEB' }}
-                customBoardStyle={{
-                  margin: '0 auto',
-                  borderRadius: '5px',
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
-                }}
-                customSquareStyles={highlightedSquares}
-              />
-              
-              {/* Success Overlay */}
-              {showSuccessOverlay && (
-                <div 
-                  className={`absolute inset-0 flex items-center justify-center bg-green-500 rounded-lg transition-opacity duration-500 ease-out ${
-                    overlayFading ? 'opacity-0' : 'opacity-100'
-                  }`}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    minWidth: '400px',
-                    minHeight: '400px'
+          <div className="flex flex-col lg:flex-row gap-6">
+            <div className="w-full lg:flex-1 mb-4 relative">
+              <div className="max-w-sm mx-auto lg:max-w-none">
+                <Chessboard 
+                  position={currentGame.fen()}
+                  onPieceDrop={handleMove}
+                  boardOrientation={boardOrientation}
+                  areArrowsAllowed={false}
+                  arePiecesDraggable={!showSuccessOverlay}
+                  isDraggablePiece={isDraggablePiece}
+                  customDarkSquareStyle={{ backgroundColor: '#D3D3D3' }}
+                  customLightSquareStyle={{ backgroundColor: '#EBEBEB' }}
+                  customBoardStyle={{
+                    margin: '0 auto',
+                    borderRadius: '5px',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
                   }}
-                >
-                  <div className={`bg-white rounded-full p-4 transition-transform duration-300 ${
-                    overlayFading ? 'scale-90' : 'animate-bounce'
-                  }`}>
-                    <CheckCircle className="w-16 h-16 text-green-500" />
+                />
+                
+                {/* Success Overlay */}
+                {showSuccessOverlay && (
+                  <div 
+                    className={`absolute inset-0 flex items-center justify-center bg-green-500 rounded-lg transition-opacity duration-500 ease-out ${
+                      overlayFading ? 'opacity-0' : 'opacity-100'
+                    }`}
+                  >
+                    <div className={`bg-white rounded-full p-4 transition-transform duration-300 ${
+                      overlayFading ? 'scale-90' : 'animate-bounce'
+                    }`}>
+                      <CheckCircle className="w-16 h-16 text-green-500" />
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
             
-            <div className="flex-1 space-y-4">
+            <div className="w-full lg:flex-1 space-y-4">
               {/* Position Info */}
               <div className="border border-border rounded-lg overflow-hidden">
                 <div className="bg-secondary/5 border-b border-border px-4 py-3">
@@ -561,20 +556,151 @@ export function Train() {
   }
 
   return (
-    <div className="lg:container py-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="lg:container py-6 px-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <h2 className="text-2xl font-semibold">Train</h2>
         <Button 
           onClick={startTraining}
           disabled={selectedOpenings.size === 0}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 w-full sm:w-auto justify-center"
         >
           <Play className="w-4 h-4" />
           Start Training ({getSelectedCount()} openings)
         </Button>
       </div>
 
-      <div className="border border-border rounded-lg overflow-hidden">
+      {/* Mobile Card View */}
+      <div className="block lg:hidden space-y-4">
+        <div className="border border-border rounded-lg p-4">
+          <label className="flex items-center gap-3 font-semibold">
+            <input
+              type="checkbox"
+              className={`${!hasAnyTrainableRepertoires() ? 'opacity-50 cursor-not-allowed' : ''}`}
+              checked={selectedRepertoires.size === repertoires.length && repertoires.length > 0 && hasAnyTrainableRepertoires()}
+              disabled={!hasAnyTrainableRepertoires()}
+              onChange={() => {
+                if (!hasAnyTrainableRepertoires()) return
+                
+                if (selectedRepertoires.size === repertoires.length) {
+                  setSelectedRepertoires(new Set())
+                  setSelectedOpenings(new Set())
+                } else {
+                  const trainableRepertoires = repertoires.filter(r => getRepertoirePositionCount(r.ID) > 0)
+                  const trainableOpenings = openings.filter(o => getOpeningPositionCount(o.ID) > 0)
+                  setSelectedRepertoires(new Set(trainableRepertoires.map(r => r.ID)))
+                  setSelectedOpenings(new Set(trainableOpenings.map(o => o.ID)))
+                }
+              }}
+            />
+            Select All
+          </label>
+        </div>
+
+        {repertoires.map((repertoire) => {
+          const repertoireOpenings = getOpeningsForRepertoire(repertoire.ID)
+          const isExpanded = expandedRepertoires.has(repertoire.ID)
+          const isSelected = selectedRepertoires.has(repertoire.ID)
+          const isPartiallySelected = isRepertoirePartiallySelected(repertoire.ID)
+          const repertoirePositionCount = getRepertoirePositionCount(repertoire.ID)
+          const isRepertoireDisabled = repertoirePositionCount === 0
+          
+          return (
+            <div key={repertoire.ID} className="border border-border rounded-lg">
+              <div className="p-4 hover:bg-secondary/5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      className={`${isRepertoireDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      checked={isSelected && !isRepertoireDisabled}
+                      disabled={isRepertoireDisabled}
+                      ref={input => {
+                        if (input) input.indeterminate = isPartiallySelected && !isSelected && !isRepertoireDisabled
+                      }}
+                      onChange={() => !isRepertoireDisabled && toggleRepertoireSelection(repertoire.ID)}
+                    />
+                    <button
+                      onClick={() => toggleRepertoireExpansion(repertoire.ID)}
+                      className="p-1 hover:bg-gray-100 rounded"
+                    >
+                      {isExpanded ? (
+                        <ChevronDown className="w-4 h-4" />
+                      ) : (
+                        <ChevronRight className="w-4 h-4" />
+                      )}
+                    </button>
+                    <span className="font-medium">{repertoire.name}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className={`font-medium ${repertoirePositionCount === 0 ? 'text-gray-400' : 'text-gray-900'}`}>
+                      {repertoirePositionCount}
+                      {repertoirePositionCount === 0 && formatNextReviewText(getRepertoireNextReviewDays(repertoire.ID))}
+                    </span>
+                    <div className="text-xs text-muted-foreground">
+                      {repertoireOpenings.length} openings
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {isExpanded && (
+                <div className="border-t border-border">
+                  {repertoireOpenings.map((opening) => {
+                    const openingPositionCount = getOpeningPositionCount(opening.ID)
+                    const isOpeningDisabled = openingPositionCount === 0
+                    
+                    return (
+                      <div key={opening.ID} className="p-4 ml-8 border-b border-border last:border-b-0 hover:bg-secondary/5">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="checkbox"
+                              className={`${isOpeningDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              checked={selectedOpenings.has(opening.ID) && !isOpeningDisabled}
+                              disabled={isOpeningDisabled}
+                              onChange={() => !isOpeningDisabled && toggleOpeningSelection(opening.ID, repertoire.ID)}
+                            />
+                            <div>
+                              <span className={isOpeningDisabled ? 'text-gray-400' : ''}>{opening.name}</span>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className={`inline-block px-2 py-1 rounded text-xs ${
+                                  opening.side === 'w' 
+                                    ? 'bg-gray-100 text-gray-800' 
+                                    : 'bg-gray-800 text-white'
+                                }`}>
+                                  {opening.side === 'w' ? 'White' : 'Black'}
+                                </span>
+                                <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">
+                                  Opening
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <span className={`font-medium ${openingPositionCount === 0 ? 'text-gray-400' : 'text-gray-900'}`}>
+                              {openingPositionCount}
+                              {openingPositionCount === 0 && formatNextReviewText(getOpeningNextReviewDays(opening.ID))}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )
+        })}
+        
+        {repertoires.length === 0 && (
+          <div className="text-center text-muted-foreground py-8">
+            No repertoires found
+          </div>
+        )}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden lg:block border border-border rounded-lg overflow-hidden">
         <table className="w-full">
           <thead>
             <tr className="bg-secondary/5 border-b border-border">
