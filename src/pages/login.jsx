@@ -11,7 +11,7 @@ export default function LoginPage({ onLogin }) {
     <div className="grid min-h-svh lg:grid-cols-2">
       <div className="flex flex-col gap-4 p-6 md:p-10">
         <div className="flex justify-center gap-2 md:justify-start">
-          <a href="#" className="flex items-center gap-1 font-medium">
+          <a href="/" className="flex items-center gap-1 font-medium">
             <img src="/logo.svg" className="size-6" />
             Chesso
           </a>
