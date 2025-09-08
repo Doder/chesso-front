@@ -16,6 +16,7 @@ export function Train() {
   const [selectedOpenings, setSelectedOpenings] = useState(new Set())
   const [loading, setLoading] = useState(true)
   const [isTraining, setIsTraining] = useState(false)
+  const scoreNextMoveRef = React.useRef(true)
   const [trainingPositions, setTrainingPositions] = useState([])
   const [solvedPositions, setSolvedPositions] = useState(new Set())
   const [currentPosition, setCurrentPosition] = useState(null)
@@ -27,6 +28,7 @@ export function Train() {
   const [boardOrientation, setBoardOrientation] = useState("white")
   const [showSuccessOverlay, setShowSuccessOverlay] = useState(false)
   const [overlayFading, setOverlayFading] = useState(false)
+  const [showCompletionOverlay, setShowCompletionOverlay] = useState(false)
   const [positionCounts, setPositionCounts] = useState({})
   const [nextReviewDays, setNextReviewDays] = useState({})
   const moveSoundRef = React.useRef(null)
@@ -184,9 +186,11 @@ export function Train() {
         setTrainingPositions(positions)
         setSolvedPositions(new Set())
         setIsTraining(true)
-        setScore({ correct: 0, total: 0 })
+        setScore({ correct: 0, total: positions.length })
         setShowSuccessOverlay(false)
         setOverlayFading(false)
+        setShowCompletionOverlay(false)
+        scoreNextMoveRef.current = true
         loadRandomPosition(positions, new Set())
       } catch (error) {
         console.error('Error fetching training positions:', error)
@@ -204,7 +208,8 @@ export function Train() {
     
     // If all positions are solved, show completion message or restart
     if (unsolvedPositions.length === 0) {
-      setFeedback({ type: 'success', message: 'All positions completed! Great job!' })
+      setFeedback(null)
+      setShowCompletionOverlay(true)
       return
     }
     
@@ -292,7 +297,12 @@ export function Train() {
           })
           
           setFeedback({ type: 'success', message: 'Correct move!' })
-          setScore(prev => ({ correct: prev.correct + 1, total: prev.total + 1 }))
+          
+          // Check if this move should be scored
+          if(scoreNextMoveRef.current){
+            setScore(prev => ({ correct: prev.correct + 1, total: prev.total }))
+          }
+          
           moveSoundRef.current?.play()
           setHighlightedSquares({})
           
@@ -311,12 +321,13 @@ export function Train() {
           newSolvedPositions.add(currentPosition.ID)
           setSolvedPositions(newSolvedPositions)
           
-          // Load next position after celebration period
+          // Reset scoreNextMove for the next position
+          scoreNextMoveRef.current = true
           loadRandomPosition(trainingPositions, newSolvedPositions)
         } else {
           setFeedback({ type: 'error', message: 'Incorrect move. Try again!' })
-          setScore(prev => ({ ...prev, total: prev.total + 1 }))
           setHighlightedSquares({})
+          scoreNextMoveRef.current = false
           
           // Reset spaced repetition progress for incorrect guess
           if (currentPosition?.ID) {
@@ -340,7 +351,6 @@ export function Train() {
 
   const skipPosition = () => {
     setFeedback({ type: 'info', message: 'Position skipped' })
-    setScore(prev => ({ ...prev, total: prev.total + 1 }))
     
     // Reset spaced repetition progress for skipped position
     if (currentPosition?.ID) {
@@ -349,6 +359,8 @@ export function Train() {
       })
     }
     
+    // Reset scoreNextMove for the next position
+    scoreNextMoveRef.current = true
     loadRandomPosition(trainingPositions)
   }
 
@@ -400,6 +412,7 @@ export function Train() {
     setHighlightedSquares({})
     setShowSuccessOverlay(false)
     setOverlayFading(false)
+    setShowCompletionOverlay(false)
     
     // Refresh position counts after training
     try {
@@ -439,14 +452,6 @@ export function Train() {
             <h2 className="text-xl lg:text-2xl font-semibold">Training Mode</h2>
           </div>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto">
-            <div className="text-sm font-medium">
-              Score: {score.correct}/{score.total} 
-              {score.total > 0 && (
-                <span className="text-muted-foreground">
-                  ({Math.round((score.correct / score.total) * 100)}%)
-                </span>
-              )}
-            </div>
             <div className="flex gap-2 w-full sm:w-auto">
               <Button onClick={showHintHandler} variant="outline" size="sm" className="flex-1 sm:flex-initial">
                 Hint
@@ -469,7 +474,7 @@ export function Train() {
                   onPieceDrop={handleMove}
                   boardOrientation={boardOrientation}
                   areArrowsAllowed={false}
-                  arePiecesDraggable={!showSuccessOverlay}
+                  arePiecesDraggable={!showSuccessOverlay && !showCompletionOverlay}
                   isDraggablePiece={isDraggablePiece}
                   customDarkSquareStyle={{ backgroundColor: '#D3D3D3' }}
                   customLightSquareStyle={{ backgroundColor: '#EBEBEB' }}
@@ -492,6 +497,20 @@ export function Train() {
                       overlayFading ? 'scale-90' : 'animate-bounce'
                     }`}>
                       <CheckCircle className="w-16 h-16 text-green-500" />
+                    </div>
+                  </div>
+                )}
+
+                {/* Completion Overlay */}
+                {showCompletionOverlay && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75 rounded-lg">
+                    <div className="bg-white rounded-lg p-6 text-center shadow-lg">
+                      <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                      <h3 className="text-xl font-bold text-gray-900 mb-2">Training Complete!</h3>
+                      <p className="text-gray-600 mb-4">All positions completed! Great job!</p>
+                      <Button onClick={exitTraining} className="bg-blue-500 hover:bg-blue-600 text-white">
+                        Back to Selection
+                      </Button>
                     </div>
                   </div>
                 )}
