@@ -3,8 +3,17 @@ import { getUser, setUser, removeUser } from '@/lib/storage'
 import { getCurrentUser, logout } from '@/api/auth'
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { Button } from './ui/button'
-import { LogOut } from 'lucide-react'
+import { LogOut, User, Settings } from 'lucide-react'
 import HamburgerMenu from './hamburger-menu'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 export default function Layout() {
   const [user, setCurrentUser] = useState(getUser());
@@ -30,37 +39,85 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <header className="border-b border-border">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-1">
-            <img src="/logo.svg" className="size-12" />
-            <Link to="/">
+      <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
+          {/* Logo and Brand */}
+          <div className="flex items-center space-x-2">
+            <img src="/logo.svg" className="size-10" />
+            <Link to="/" className="hover:text-foreground/80 transition-colors">
               <h1 className="text-xl font-bold">Chesso</h1>
             </Link>
           </div>
-          <div className="flex items-center space-x-4">
-            <nav className="hidden lg:block">
-              <ul className="flex space-x-4">
-                {/* <li><Button variant="ghost">Profile</Button></li> */}
-                {/* <li><Button variant="ghost">Settings</Button></li> */}
-                <li>
-                  <Link to="/repertoires">
-                    <Button variant={location.pathname.startsWith('/repertoire') ? 'default' : 'ghost'}>Repertoires</Button>
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/train">
-                    <Button variant={location.pathname === '/train' ? 'default' : 'ghost'}>Train</Button>
-                  </Link>
-                </li>
-              </ul>
-            </nav>
-            <div className="hidden lg:flex items-center space-x-4">
-              {user && <span className="text-sm font-medium">{user.Username}</span>}
-              <Button variant="ghost" size="icon" onClick={logout}>
-                <LogOut className="size-4" />
-              </Button>
+
+          {/* Main Navigation */}
+          <nav className="hidden lg:flex items-center space-x-8">
+            <Link 
+              to="/repertoires"
+              className={`text-sm font-medium transition-colors hover:text-foreground/80 relative ${
+                location.pathname.startsWith('/repertoire') 
+                  ? 'text-foreground after:absolute after:bottom-[-6px] after:left-0 after:right-0 after:h-0.5 after:bg-primary after:rounded-full' 
+                  : 'text-foreground/60'
+              }`}
+            >
+              Repertoires
+            </Link>
+            <Link 
+              to="/train"
+              className={`text-sm font-medium transition-colors hover:text-foreground/80 relative ${
+                location.pathname === '/train' 
+                  ? 'text-foreground after:absolute after:bottom-[-6px] after:left-0 after:right-0 after:h-0.5 after:bg-primary after:rounded-full' 
+                  : 'text-foreground/60'
+              }`}
+            >
+              Train
+            </Link>
+          </nav>
+
+          {/* User Section */}
+          <div className="flex items-center space-x-3">
+            {/* Desktop User Dropdown */}
+            <div className="hidden lg:block">
+              {user && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="flex items-center space-x-2">
+                      <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
+                        {user.Username?.charAt(0).toUpperCase() || 'U'}
+                      </div>
+                      <span className="text-sm font-medium">{user.Username}</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">{user.Username}</p>
+                        <p className="text-xs leading-none text-muted-foreground">
+                          {user.Email || 'user@example.com'}
+                        </p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuGroup>
+                      <DropdownMenuItem disabled>
+                        <User className="mr-2 h-4 w-4" />
+                        <span>Profile</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem disabled>
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>Settings</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={logout} className="text-red-600 focus:text-red-600">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Log out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
+            
+            {/* Mobile Hamburger Menu */}
             <HamburgerMenu user={user} />
           </div>
         </div>
