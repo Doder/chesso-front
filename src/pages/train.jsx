@@ -26,11 +26,13 @@ export function Train() {
   const [showHint, setShowHint] = useState(false)
   const [highlightedSquares, setHighlightedSquares] = useState({})
   const [boardOrientation, setBoardOrientation] = useState("white")
-  const [showSuccessOverlay, setShowSuccessOverlay] = useState(false)
-  const [overlayFading, setOverlayFading] = useState(false)
   const [showCompletionOverlay, setShowCompletionOverlay] = useState(false)
   const [positionCounts, setPositionCounts] = useState({})
   const [nextReviewDays, setNextReviewDays] = useState({})
+  const [shufflePositions, setShufflePositions] = useState(false)
+  const [currentPositionIndex, setCurrentPositionIndex] = useState(0)
+  const [lastMove, setLastMove] = useState(null)
+  const [showSuccessBorder, setShowSuccessBorder] = useState(false)
   const moveSoundRef = React.useRef(null)
 
   useEffect(() => {
@@ -187,11 +189,10 @@ export function Train() {
         setSolvedPositions(new Set())
         setIsTraining(true)
         setScore({ correct: 0, total: positions.length })
-        setShowSuccessOverlay(false)
-        setOverlayFading(false)
         setShowCompletionOverlay(false)
+        setCurrentPositionIndex(0)
         scoreNextMoveRef.current = true
-        loadRandomPosition(positions, new Set())
+        loadRandomPosition(positions, new Set(), 0)
       } catch (error) {
         console.error('Error fetching training positions:', error)
       } finally {
@@ -200,27 +201,77 @@ export function Train() {
     }
   }
 
-  const loadRandomPosition = useCallback((positions, solved = solvedPositions) => {
+  const loadRandomPosition = useCallback((positions, solved = solvedPositions, posIndex = currentPositionIndex) => {
     if (positions.length === 0) return
-    
+
     // Filter out solved positions
     const unsolvedPositions = positions.filter(pos => !solved.has(pos.ID))
-    
+
     // If all positions are solved, show completion message or restart
     if (unsolvedPositions.length === 0) {
       setFeedback(null)
       setShowCompletionOverlay(true)
       return
     }
-    
-    const randomIndex = Math.floor(Math.random() * unsolvedPositions.length)
-    const position = unsolvedPositions[randomIndex]
+
+    let position
+    let newIndex = posIndex
+
+    if (shufflePositions) {
+      // Random mode - pick a random unsolved position
+      const randomIndex = Math.floor(Math.random() * unsolvedPositions.length)
+      position = unsolvedPositions[randomIndex]
+    } else {
+      // Ordered mode - go through positions sequentially
+      // Find the next unsolved position starting from current index
+      let found = false
+      for (let i = 0; i < positions.length; i++) {
+        const checkIndex = (posIndex + i) % positions.length
+        const pos = positions[checkIndex]
+        if (!solved.has(pos.ID)) {
+          position = pos
+          newIndex = (checkIndex + 1) % positions.length
+          found = true
+          break
+        }
+      }
+
+      if (!found) {
+        // Shouldn't happen as we already checked unsolvedPositions.length
+        setFeedback(null)
+        setShowCompletionOverlay(true)
+        return
+      }
+    }
+
+    setCurrentPositionIndex(newIndex)
     setCurrentPosition(position)
     setCurrentGame(new Chess(position.fen))
     setFeedback(null)
     setShowHint(false)
     setHighlightedSquares({})
-    
+
+    // Calculate last move from previous position
+    if (position.PrevPositions && position.PrevPositions.length > 0) {
+      const prevPosition = position.PrevPositions[0]
+      const prevGame = new Chess(prevPosition.fen)
+      const currentGameTemp = new Chess(position.fen)
+
+      // Find the move by trying all legal moves in previous position
+      const legalMoves = prevGame.moves({ verbose: true })
+      for (const move of legalMoves) {
+        const testGame = new Chess(prevPosition.fen)
+        testGame.move(move)
+        if (testGame.fen() === position.fen) {
+          // Found the move that led to current position
+          setLastMove({ from: move.from, to: move.to })
+          break
+        }
+      }
+    } else {
+      setLastMove(null)
+    }
+
     // Set board orientation based on the opening side
     if (position.Opening?.side) {
       setBoardOrientation(position.Opening.side === 'b' ? 'black' : 'white')
@@ -231,22 +282,8 @@ export function Train() {
         setBoardOrientation(opening.side === 'b' ? 'black' : 'white')
       }
     }
-  }, [openings, solvedPositions])
+  }, [openings, solvedPositions, shufflePositions, currentPositionIndex])
 
-  // Handle overlay fade-out with useEffect
-  useEffect(() => {
-    if (showSuccessOverlay && currentGame) {
-      const fadeTimer = setTimeout(() => {
-        setOverlayFading(true)
-        const hideTimer = setTimeout(() => {
-          setShowSuccessOverlay(false)
-          setOverlayFading(false)
-        }, 500)
-        return () => clearTimeout(hideTimer)
-      }, 50)
-      return () => clearTimeout(fadeTimer)
-    }
-  }, [showSuccessOverlay, currentGame])
 
   const isDraggablePiece = useCallback(({ piece, sourceSquare }) => {
     if (!currentPosition) return false
@@ -266,10 +303,10 @@ export function Train() {
     // Check if piece color matches opening side
     const pieceColor = piece[0] // 'w' or 'b' (first character of piece notation like 'wP', 'bK')
     return pieceColor === openingSide
-  }, [currentPosition, openings, showSuccessOverlay])
+  }, [currentPosition, openings])
 
   const handleMove = useCallback((sourceSquare, targetSquare) => {
-    if (!currentGame || !currentPosition || showSuccessOverlay) return false
+    if (!currentGame || !currentPosition) return false
 
     try {
       // Create a copy to test the move without affecting display
@@ -295,35 +332,40 @@ export function Train() {
             to: targetSquare,
             promotion: 'q'
           })
-          
+
           setFeedback({ type: 'success', message: 'Correct move!' })
-          
+
           // Check if this move should be scored
           if(scoreNextMoveRef.current){
             setScore(prev => ({ correct: prev.correct + 1, total: prev.total }))
           }
-          
+
           moveSoundRef.current?.play()
           setHighlightedSquares({})
-          
-          // Show success overlay
-          setShowSuccessOverlay(true)
-          
+
+          // Show green border feedback
+          setShowSuccessBorder(true)
+          setTimeout(() => setShowSuccessBorder(false), 800)
+
           // Update spaced repetition progress for correct guess
           if (currentPosition?.ID) {
             updatePositionCorrectGuess(currentPosition.ID).catch(error => {
               console.error('Error updating position progress:', error)
             })
           }
-          
+
           // Mark position as solved
           const newSolvedPositions = new Set(solvedPositions)
           newSolvedPositions.add(currentPosition.ID)
           setSolvedPositions(newSolvedPositions)
-          
+
           // Reset scoreNextMove for the next position
           scoreNextMoveRef.current = true
-          loadRandomPosition(trainingPositions, newSolvedPositions)
+
+          // Delay loading next position for smooth transition
+          setTimeout(() => {
+            loadRandomPosition(trainingPositions, newSolvedPositions, currentPositionIndex)
+          }, 1000)
         } else {
           setFeedback({ type: 'error', message: 'Incorrect move. Try again!' })
           setHighlightedSquares({})
@@ -347,21 +389,21 @@ export function Train() {
     }
 
     return false
-  }, [currentGame, currentPosition, trainingPositions, showSuccessOverlay])
+  }, [currentGame, currentPosition, trainingPositions, solvedPositions, currentPositionIndex])
 
   const skipPosition = () => {
     setFeedback({ type: 'info', message: 'Position skipped' })
-    
+
     // Reset spaced repetition progress for skipped position
     if (currentPosition?.ID) {
       resetPositionProgress(currentPosition.ID).catch(error => {
         console.error('Error resetting position progress:', error)
       })
     }
-    
+
     // Reset scoreNextMove for the next position
     scoreNextMoveRef.current = true
-    loadRandomPosition(trainingPositions)
+    loadRandomPosition(trainingPositions, solvedPositions, currentPositionIndex)
   }
 
   const showHintHandler = () => {
@@ -468,13 +510,16 @@ export function Train() {
         {currentGame && (
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="w-full lg:flex-1 mb-4 relative">
-              <div className="max-w-sm mx-auto lg:max-w-none">
-                <Chessboard 
+              <div className={`max-w-sm mx-auto lg:max-w-none transition-all duration-300 ${
+                showSuccessBorder ? 'ring-4 ring-green-500' : ''
+              }`}>
+                <Chessboard
                   position={currentGame.fen()}
                   onPieceDrop={handleMove}
                   boardOrientation={boardOrientation}
+                  animationDuration={600}
                   areArrowsAllowed={false}
-                  arePiecesDraggable={!showSuccessOverlay && !showCompletionOverlay}
+                  arePiecesDraggable={!showCompletionOverlay}
                   isDraggablePiece={isDraggablePiece}
                   customDarkSquareStyle={{ backgroundColor: '#D3D3D3' }}
                   customLightSquareStyle={{ backgroundColor: '#EBEBEB' }}
@@ -483,38 +528,29 @@ export function Train() {
                     borderRadius: '5px',
                     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
                   }}
-                  customSquareStyles={highlightedSquares}
+                  customSquareStyles={{
+                    ...highlightedSquares,
+                    ...(lastMove && {
+                      [lastMove.from]: { backgroundColor: 'rgba(155, 199, 0, 0.41)' },
+                      [lastMove.to]: { backgroundColor: 'rgba(155, 199, 0, 0.41)' }
+                    })
+                  }}
                 />
-                
-                {/* Success Overlay */}
-                {showSuccessOverlay && (
-                  <div 
-                    className={`absolute inset-0 flex items-center justify-center bg-green-500 rounded-lg transition-opacity duration-500 ease-out ${
-                      overlayFading ? 'opacity-0' : 'opacity-100'
-                    }`}
-                  >
-                    <div className={`bg-white rounded-full p-4 transition-transform duration-300 ${
-                      overlayFading ? 'scale-90' : 'animate-bounce'
-                    }`}>
-                      <CheckCircle className="w-16 h-16 text-green-500" />
-                    </div>
-                  </div>
-                )}
-
-                {/* Completion Overlay */}
-                {showCompletionOverlay && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75 rounded-lg">
-                    <div className="bg-white rounded-lg p-6 text-center shadow-lg">
-                      <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                      <h3 className="text-xl font-bold text-gray-900 mb-2">Training Complete!</h3>
-                      <p className="text-gray-600 mb-4">All positions completed! Great job!</p>
-                      <Button onClick={exitTraining} className="bg-blue-500 hover:bg-blue-600 text-white">
-                        Back to Selection
-                      </Button>
-                    </div>
-                  </div>
-                )}
               </div>
+
+              {/* Completion Overlay */}
+              {showCompletionOverlay && (
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75 rounded-lg">
+                  <div className="bg-white rounded-lg p-6 text-center shadow-lg">
+                    <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">Training Complete!</h3>
+                    <p className="text-gray-600 mb-4">All positions completed! Great job!</p>
+                    <Button onClick={exitTraining} className="bg-blue-500 hover:bg-blue-600 text-white">
+                      Back to Selection
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
             
             <div className="w-full lg:flex-1 space-y-4">
@@ -579,14 +615,25 @@ export function Train() {
     <div className="lg:container py-6 px-4">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <h2 className="text-2xl font-semibold">Train</h2>
-        <Button 
-          onClick={startTraining}
-          disabled={selectedOpenings.size === 0}
-          className="flex items-center gap-2 w-full sm:w-auto justify-center"
-        >
-          <Play className="w-4 h-4" />
-          Start Training ({getSelectedCount()} openings)
-        </Button>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              checked={shufflePositions}
+              onChange={(e) => setShufflePositions(e.target.checked)}
+              className="cursor-pointer"
+            />
+            Shuffle positions
+          </label>
+          <Button
+            onClick={startTraining}
+            disabled={selectedOpenings.size === 0}
+            className="flex items-center gap-2 w-full sm:w-auto justify-center"
+          >
+            <Play className="w-4 h-4" />
+            Start Training ({getSelectedCount()} openings)
+          </Button>
+        </div>
       </div>
 
       {/* Mobile Card View */}
