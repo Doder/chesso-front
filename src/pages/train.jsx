@@ -184,7 +184,28 @@ export function Train() {
       setLoading(true)
       try {
         const response = await getPositionsByOpeningIds(Array.from(selectedOpenings))
-        const positions = response.data
+        let positions = response.data
+
+        // For White openings, prepend the starting position if not already present
+        const STARTING_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
+        const hasWhiteOpenings = positions.some(p => p.Opening?.side === 'w')
+        const hasStartingPosition = positions.some(p => p.fen === STARTING_FEN)
+
+        if (hasWhiteOpenings && !hasStartingPosition && positions.length > 0) {
+          // Create synthetic starting position
+          const firstPosition = positions[0]
+          const startingPosition = {
+            ID: -1, // Synthetic ID
+            fen: STARTING_FEN,
+            Opening: firstPosition.Opening,
+            opening_id: firstPosition.opening_id,
+            NextPositions: [firstPosition], // First real position is the next move
+            PrevPositions: [],
+            opening_name: firstPosition.opening_name
+          }
+          positions = [startingPosition, ...positions]
+        }
+
         setTrainingPositions(positions)
         setSolvedPositions(new Set())
         setIsTraining(true)
@@ -347,8 +368,8 @@ export function Train() {
           setShowSuccessBorder(true)
           setTimeout(() => setShowSuccessBorder(false), 800)
 
-          // Update spaced repetition progress for correct guess
-          if (currentPosition?.ID) {
+          // Update spaced repetition progress for correct guess (skip synthetic positions)
+          if (currentPosition?.ID && currentPosition.ID > 0) {
             updatePositionCorrectGuess(currentPosition.ID).catch(error => {
               console.error('Error updating position progress:', error)
             })
@@ -370,9 +391,9 @@ export function Train() {
           setFeedback({ type: 'error', message: 'Incorrect move. Try again!' })
           setHighlightedSquares({})
           scoreNextMoveRef.current = false
-          
-          // Reset spaced repetition progress for incorrect guess
-          if (currentPosition?.ID) {
+
+          // Reset spaced repetition progress for incorrect guess (skip synthetic positions)
+          if (currentPosition?.ID && currentPosition.ID > 0) {
             resetPositionProgress(currentPosition.ID).catch(error => {
               console.error('Error resetting position progress:', error)
             })
@@ -394,8 +415,8 @@ export function Train() {
   const skipPosition = () => {
     setFeedback({ type: 'info', message: 'Position skipped' })
 
-    // Reset spaced repetition progress for skipped position
-    if (currentPosition?.ID) {
+    // Reset spaced repetition progress for skipped position (skip synthetic positions)
+    if (currentPosition?.ID && currentPosition.ID > 0) {
       resetPositionProgress(currentPosition.ID).catch(error => {
         console.error('Error resetting position progress:', error)
       })
